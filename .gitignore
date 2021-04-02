@@ -1,0 +1,6 @@
+# build / temp files
+build/
+.class
+
+# system
+.DS_Store
