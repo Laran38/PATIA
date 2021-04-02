@@ -1,6 +1,7 @@
 # build / temp files
 build/
-.class
+bin/
+*.class
 
 # system
 .DS_Store
