@@ -1,14 +1,15 @@
 package fr.uga.pddl4j.tutorial.asp;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sat4j.core.VecInt;
 import org.sat4j.csp.SolverFactory;
 import org.sat4j.reader.DimacsReader;
+import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.IProblem;
 import org.sat4j.specs.ISolver;
+import org.sat4j.specs.TimeoutException;
 
 import fr.uga.pddl4j.encoding.CodedProblem;
 import fr.uga.pddl4j.heuristics.relaxation.Heuristic;
@@ -19,16 +20,17 @@ import fr.uga.pddl4j.util.BitState;
 import fr.uga.pddl4j.util.IntExp;
 import fr.uga.pddl4j.util.Plan;
 
-@SuppressWarnings("serial")
-public class SATSearch extends ASP{
+public class SATSearch extends ASP {
 	
+	private static final long serialVersionUID = 1L;
+
 	private static final int TIMEOUT = 300;
 	private final int MIN_STEP;
 	private final int tailleFact;
 	private final List<BitOp> operators;
 	private final List<IntExp> revelantFacts;
 	private final IndexFactory numberGenerator;
-	private ArrayList<ArrayList<Integer>> toSat;
+	private ArrayList<ArrayList<Integer>> clauses;
 	private Integer etape;
 	private long time;
 		
@@ -38,8 +40,10 @@ public class SATSearch extends ASP{
 		this.operators = pb.getOperators();
 		this.revelantFacts = pb.getRelevantFacts();
 		this.etape = 0;
-		this.PATH += "test.txt";
-		this.toSat = new ArrayList<>();
+
+		PATH += "test.txt";
+
+		this.clauses = new ArrayList<>();
 		this.tailleFact = revelantFacts.size();
 		final Heuristic heuristic = HeuristicToolKit.createHeuristic(Heuristic.Type.FAST_FORWARD, pb);
 		final BitState init = new BitState(pb.getInit());
@@ -71,42 +75,48 @@ public class SATSearch extends ASP{
 		
 	}
 	
-	private void genererFichierCNF(int nbVar) {
-		/*
-		 * p cnf nbVar tailleListe
-		 *
-		 * Pour chaque elem : marque tous les ou + 0
-		 */
-		try {
-			FileWriter fw = new FileWriter(PATH);
-			fw.append("p cnf " + nbVar + " " + this.toSat.size() + "\n");
-			for (ArrayList<Integer> ts : toSat) {
-				for (Integer i : ts)
-					fw.append(i + " ");
-				fw.append("0\n");
-			}
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private String solverSat() {
+		final int MAXVAR = 1000000;
+		final int NBCLAUSES = 500000;
+
 		ISolver solver = SolverFactory.newDefault();
-	    solver.setTimeout(TIMEOUT); 
-	    DimacsReader reader = new DimacsReader(solver);
-	    try {
-	        IProblem problem = reader.parseInstance(this.PATH);
-	        if (problem.isSatisfiable()) {
-	            return reader.decode(problem.model());
-	        } else 
-	            System.out.println("Unsatisfiable a l etape " + this.etape);
-	        	return "";
-	    }
-	    catch (Exception e) {
+		DimacsReader reader = new DimacsReader(solver);
+
+		// prepare the solver to accept MAXVAR variables. MANDATORY for MAXSAT solving
+		solver.newVar(MAXVAR);
+		solver.setExpectedNumberOfClauses(NBCLAUSES);
+		solver.setTimeout(TIMEOUT);
+
+		for (int i = 0; i < clauses.size(); i++) {
+			try {
+				int[] clause = new int[clauses.get(i).size()];
+				for (int j = 0; j < clauses.get(i).size(); j++) {
+					clause[j] = clauses.get(i).get(j);
+				}
+				
+				solver.addClause(new VecInt(clause));
+			} catch (ContradictionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		// we are done. Working now on the IProblem interface
+		IProblem problem = solver;
+
+		try {
+			if (problem.isSatisfiable()) {
+				return reader.decode(problem.model());
+			} else {
+				System.out.println("Unsatisfiable a l etape " + this.etape);
+				return "";
+			}
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	    return "";
+
+		return "";
 	}
 	
 	private void genererDisjonction() {
@@ -116,7 +126,7 @@ public class SATSearch extends ASP{
 				toAdd = new ArrayList<>();
 				toAdd.add(numberGenerator.genererIndex(i + tailleFact, etape, false));
 				toAdd.add(numberGenerator.genererIndex(j + tailleFact, etape, false));
-				toSat.add(toAdd);
+				clauses.add(toAdd);
 			}
 		}		
 	}
@@ -145,7 +155,7 @@ public class SATSearch extends ASP{
 	private void implicationTransition(int f1, int f2, ArrayList<Integer> index) {
 		index.add(f1 * -1);
 		index.add(f2 * -1);
-		toSat.add(index);
+		clauses.add(index);
 	}
 
 	private void genererActions() {
@@ -178,7 +188,7 @@ public class SATSearch extends ASP{
 			toArr = new ArrayList<>();
 			toArr.add(indiceAction);
 			toArr.add(i);
-			toSat.add(toArr);
+			clauses.add(toArr);
 		}	
 	}
 	
@@ -188,11 +198,11 @@ public class SATSearch extends ASP{
 			allInt = new ArrayList<>();
 			if (bitExp.getPositive().get(i)) {
 				allInt.add(numberGenerator.genererIndex(i, this.etape, true));
-				this.toSat.add(allInt);
+				this.clauses.add(allInt);
 			}
 			else if (bitExp.getNegative().get(i)) {
 				allInt.add(numberGenerator.genererIndex(i, this.etape, false));
-				this.toSat.add(allInt);
+				this.clauses.add(allInt);
 			}
 		}	
 	}
@@ -202,7 +212,7 @@ public class SATSearch extends ASP{
 		for (int i = 0; i < revelantFacts.size(); i++) {
 			allInt = new ArrayList<>();
 			allInt.add(numberGenerator.genererIndex(i, this.etape, bitExp.getPositive().get(i)));
-			this.toSat.add(allInt);
+			this.clauses.add(allInt);
 		}	
 	}
 
@@ -228,26 +238,23 @@ public class SATSearch extends ASP{
 		if(this.MIN_STEP > this.etape)
 			this.search();
 		else {
-			int save = this.toSat.size();
+			int save = this.clauses.size();
 			genererGoal(pb.getGoal());
 			super.getStatistics().setTimeToEncode(System.currentTimeMillis() - time);
 			time= System.currentTimeMillis();
-			genererFichierCNF((this.revelantFacts.size() + this.operators.size()) * this.etape);
-			//time = 1,145s
+
 			String res = solverSat();
 			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
 			
-			//time = tooLong
 			if(res == "") {
-				for(int i = this.toSat.size() - 1; i >= save; i--)
-					this.toSat.remove(i);
+				for(int i = this.clauses.size() - 1; i >= save; i--)
+					this.clauses.remove(i);
 				this.search();
 			}
 			else
 				afficheFinal(res);
 		}
 	}
-
 	
 	@Override
 	public Plan search(CodedProblem arg) {
@@ -255,7 +262,4 @@ public class SATSearch extends ASP{
 		this.search();
 		return null;
 	}
-
-	
-	
 }
