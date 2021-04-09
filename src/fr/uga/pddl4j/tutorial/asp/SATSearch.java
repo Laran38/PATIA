@@ -1,7 +1,5 @@
 package fr.uga.pddl4j.tutorial.asp;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,26 +75,6 @@ public class SATSearch extends ASP {
 		
 	}
 	
-	private void genererFichierCNF(int nbVar) {
-		/*
-		 * p cnf nbVar tailleListe
-		 *
-		 * Pour chaque elem : marque tous les ou + 0
-		 */
-		try {
-			FileWriter fw = new FileWriter(PATH);
-			fw.append("p cnf " + nbVar + " " + this.clauses.size() + "\n");
-			for (ArrayList<Integer> ts : clauses) {
-				for (Integer i : ts)
-					fw.append(i + " ");
-				fw.append("0\n");
-			}
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private String solverSat() {
 		final int MAXVAR = 1000000;
 		final int NBCLAUSES = 500000;
@@ -264,12 +242,10 @@ public class SATSearch extends ASP {
 			genererGoal(pb.getGoal());
 			super.getStatistics().setTimeToEncode(System.currentTimeMillis() - time);
 			time= System.currentTimeMillis();
-			genererFichierCNF((this.revelantFacts.size() + this.operators.size()) * this.etape);
-			//time = 1,145s
+
 			String res = solverSat();
 			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
 			
-			//time = tooLong
 			if(res == "") {
 				for(int i = this.clauses.size() - 1; i >= save; i--)
 					this.clauses.remove(i);
