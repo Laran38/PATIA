@@ -12,7 +12,7 @@ import fr.uga.pddl4j.planners.Statistics;
 
 public class TraceGraphe extends JFrame {
 	/*
-	 * Nom du probleme relié au temps mit par l'ASP [0] et par le SAT [1]
+	 * Nom du probleme reliÃ© au temps mit par l'ASP [0] et par le SAT [1]
 	 */
 	private final String PATH = "./toPlot.txt";
 	private HashMap<String, long[]> listeProblemeTemps;
