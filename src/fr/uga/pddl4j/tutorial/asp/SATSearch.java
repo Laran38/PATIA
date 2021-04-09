@@ -17,66 +17,35 @@ import fr.uga.pddl4j.util.BitExp;
 import fr.uga.pddl4j.util.BitOp;
 import fr.uga.pddl4j.util.BitState;
 import fr.uga.pddl4j.util.IntExp;
+import fr.uga.pddl4j.util.Plan;
 
-public class SATSearch{
+@SuppressWarnings("serial")
+public class SATSearch extends ASP{
 	
 	private static final int TIMEOUT = 300;
 	private final int MIN_STEP;
 	private final int tailleFact;
-	private final String PATH;
-	private final CodedProblem pb;
 	private final List<BitOp> operators;
 	private final List<IntExp> revelantFacts;
 	private final IndexFactory numberGenerator;
 	private ArrayList<ArrayList<Integer>> toSat;
-	private Integer etape;	
-	
-	public SATSearch(CodedProblem pb) {
+	private Integer etape;
+	private long time;
+		
+	public SATSearch(String[] args) {
+		super(args);
 		this.numberGenerator = new IndexFactory();		
 		this.operators = pb.getOperators();
 		this.revelantFacts = pb.getRelevantFacts();
-		this.pb = pb;
 		this.etape = 0;
+		this.PATH += "test.txt";
 		this.toSat = new ArrayList<>();
-		this.PATH = "File/test.txt";
 		this.tailleFact = revelantFacts.size();
 		final Heuristic heuristic = HeuristicToolKit.createHeuristic(Heuristic.Type.FAST_FORWARD, pb);
 		final BitState init = new BitState(pb.getInit());
 		this.MIN_STEP = heuristic.estimate(init, pb.getGoal());
 	}
 
-	public void start() {
-		/*
-		 * Sur taquin 
-		 */
-		// time = 0
-		if(this.etape == 0)
-			genererInit(pb.getInit());
-		genererActions();
-		genererTransition();
-		genererDisjonction();
-		this.etape++;
-		if(this.MIN_STEP > this.etape)
-			this.start();
-		else {
-			int save = this.toSat.size();
-			genererGoal(pb.getGoal());
-			//time = 9ms
-			genererFichierCNF((this.revelantFacts.size() + this.operators.size()) * this.etape);
-			//time = 1,145s
-			String res = solverSat(PATH);
-			//time = tooLong
-			if(res == "") {
-				for(int i = this.toSat.size() - 1; i >= save; i--)
-					this.toSat.remove(i);
-				this.start();
-				return;
-			}
-			else
-				afficheFinal(res);
-		}
-	}
-	
 	private void afficheFinal(String res) {
 		String[] rest = res.split(" ");
 		String[] resString = new String[this.etape + 1]; 
@@ -122,12 +91,12 @@ public class SATSearch{
 		}
 	}
 
-	private String solverSat(String path) {
+	private String solverSat() {
 		ISolver solver = SolverFactory.newDefault();
-	    solver.setTimeout(this.TIMEOUT); 
+	    solver.setTimeout(TIMEOUT); 
 	    DimacsReader reader = new DimacsReader(solver);
 	    try {
-	        IProblem problem = reader.parseInstance(path);
+	        IProblem problem = reader.parseInstance(this.PATH);
 	        if (problem.isSatisfiable()) {
 	            return reader.decode(problem.model());
 	        } else 
@@ -236,4 +205,57 @@ public class SATSearch{
 			this.toSat.add(allInt);
 		}	
 	}
+
+	public CodedProblem getPB() {
+		return this.pb;
+	}
+
+	@Override
+	public void search() {
+		/*
+		 * Sur taquin 
+		 */
+		// time = 0
+		if(this.etape == 0) {
+			time = System.currentTimeMillis();
+			genererInit(pb.getInit());
+		}
+			
+		genererActions();
+		genererTransition();
+		genererDisjonction();
+		this.etape++;
+		if(this.MIN_STEP > this.etape)
+			this.search();
+		else {
+			int save = this.toSat.size();
+			genererGoal(pb.getGoal());
+			super.getStatistics().setTimeToEncode(System.currentTimeMillis() - time);
+			time= System.currentTimeMillis();
+			genererFichierCNF((this.revelantFacts.size() + this.operators.size()) * this.etape);
+			//time = 1,145s
+			String res = solverSat();
+			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
+			
+			//time = tooLong
+			if(res == "") {
+				for(int i = this.toSat.size() - 1; i >= save; i--)
+					this.toSat.remove(i);
+				this.search();
+			}
+			else
+				afficheFinal(res);
+		}
+	}
+
+	
+	@Override
+	public Plan search(CodedProblem arg) {
+		this.pb = arg;
+		this.search();
+		return null;
+	}
+
+	
+	
 }

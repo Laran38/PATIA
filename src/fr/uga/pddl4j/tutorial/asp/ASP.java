@@ -4,21 +4,31 @@ import java.io.File;
 import java.util.Properties;
 
 import fr.uga.pddl4j.encoding.CodedProblem;
-import fr.uga.pddl4j.heuristics.relaxation.Heuristic;
 import fr.uga.pddl4j.parser.ErrorManager;
 import fr.uga.pddl4j.planners.Planner;
 import fr.uga.pddl4j.planners.ProblemFactory;
 import fr.uga.pddl4j.planners.statespace.AbstractStateSpacePlanner;
 import fr.uga.pddl4j.planners.statespace.StateSpacePlanner;
-import fr.uga.pddl4j.planners.statespace.search.strategy.AStar;
-import fr.uga.pddl4j.planners.statespace.search.strategy.Node;
-import fr.uga.pddl4j.planners.statespace.search.strategy.StateSpaceStrategy;
 import fr.uga.pddl4j.util.Plan;
 
-public final class ASP extends AbstractStateSpacePlanner {
-	private static final long serialVersionUID = 1L;
-	private Properties arguments;
+abstract public class ASP extends AbstractStateSpacePlanner {
 	
+	private static final long serialVersionUID = 1L;
+	protected Properties arguments;
+	protected long time;
+	protected CodedProblem pb;
+	protected static String PATH = "";
+	
+	public ASP() {
+	}
+
+	public ASP(String[] args) {
+		this.arguments = gererOptions(args);
+		this.time = System.currentTimeMillis();
+		this.pb = this.parse(args, new TraceGraphe());
+		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
+	}
+
 	public ASP(final Properties arguments) {
 	    super();
 	    this.arguments = arguments;
@@ -44,12 +54,11 @@ public final class ASP extends AbstractStateSpacePlanner {
 		return i < fichiers.length && existe; 
 	}
 		
-	private static Properties gererOptions(String[] args) {
+	protected static Properties gererOptions(String[] args) {
 		Properties arg = StateSpacePlanner.getDefaultArguments();
 		String type;
 		Object value;
 		for(int i=0; i < args.length; i+=2) {
-			
 			switch (args[i]) {
 			case "-o": 
 				if(!estValide(i, args))	return null;
@@ -67,6 +76,9 @@ public final class ASP extends AbstractStateSpacePlanner {
 				type = Planner.TIMEOUT;
 				arg.put(type, value);
 				break;
+			case "-p": 
+				Benchmark.start(Benchmark.PATH);
+				return null;
 			case "-w": 
 				value = Double.parseDouble(args[i + 1]);
 				if ((int) value < 0) return null;
@@ -86,19 +98,10 @@ public final class ASP extends AbstractStateSpacePlanner {
 	private static boolean estSpecifie(Properties arg, String aSpecifie) {
 		return arg.get(aSpecifie) != null;
 	}
-	
-	@Override
-	public Plan search(final CodedProblem problem) {
-	  int timeout = (int) this.arguments.get(Planner.TIMEOUT);
-	  double weight = (double) arguments.get(StateSpacePlanner.WEIGHT);         
-	  StateSpaceStrategy astar = new AStar(timeout, Heuristic.Type.FAST_FORWARD, weight);
-	  Node goalNode = astar.searchSolutionNode(problem);
-	  Planner.getLogger().trace(problem.toString(goalNode));
-	  return astar.extractPlan(goalNode, problem);
-	}
-		
-	public static void main(String[] args) {
-		  final Properties arguments = ASP.gererOptions(args);
+			
+	public CodedProblem parse(String[] args, TraceGraphe tg) {
+		time = System.currentTimeMillis();
+		final Properties arguments = ASP.gererOptions(args);
 		  if (arguments == null) {
 		    ASP.afficherAide();
 		    System.exit(0);
@@ -128,26 +131,27 @@ public final class ASP extends AbstractStateSpacePlanner {
 			  Planner.getLogger().trace(String.format("goal can be simplified to FALSE." 
 			                                            +  "no search will solve it%n%n"));
 			  System.exit(0);
-			}
-		  long time = System.currentTimeMillis();
-		  
-		  SATSearch sats = new SATSearch(pb);
-		  sats.start();
-		  long timesat = System.currentTimeMillis();
-		  System.out.println("Temps SAT = " + (timesat - time));
-		  time = System.currentTimeMillis();
-		  long timeASP = 0;
-		  Plan plan = (new ASP(arguments)).search(pb);
-		  if (plan != null) {
-		    // Print plan information
-		    Planner.getLogger().trace(String.format("%nfound plan as follows:%n%n" + pb.toString(plan)));
-		    Planner.getLogger().trace(String.format("%nplan total cost: %4.2f%n%n", plan.cost()));
-		    timeASP = System.currentTimeMillis();
-		  } else {
-		    Planner.getLogger().trace(String.format(String.format("%nno plan found%n%n")));
-		  }	  
-		 
-		  System.out.println("Temps ASP = " + (timeASP - time));
+			}	
+		  return pb;
+	}
+	
+	public long timeUse() {
+		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse() + this.getStatistics().getTimeToSearch();
+	}
+	
+	public void search() {
+		Plan plan = this.search(this.pb);
+		if (plan != null) {
+			  Planner.getLogger().trace(String.format("%nfound plan as follows:%n%n" + pb.toString(plan)));
+			  Planner.getLogger().trace(String.format("%nplan total cost: %4.2f%n%n", plan.cost()));
+			} else {
+			  Planner.getLogger().trace(String.format(String.format("%nno plan found%n%n")));
+		}
+	}
+	
+	public static void main(String[] args) {
+		new AStarSolver(args);
+		
 	}
 
 
