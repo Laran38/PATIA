@@ -57,6 +57,7 @@ public class SATSearch extends ASP {
 			int value = Integer.parseInt(courant);
 			int index = Math.abs(numberGenerator.getIndex(value));
 			int etape = Math.abs(numberGenerator.getEtape(value));
+
 			if (index > this.tailleFact && value > 0) {
 				index -= this.tailleFact;
 				BitOp operation = operators.get(index - 1);
@@ -64,15 +65,12 @@ public class SATSearch extends ASP {
 				for (int op : operation.getInstantiations())
 					resString[etape] += pb.getConstants().get(op) + " ";
 			}
-			
-				
 		}
+
 		for (int i = 0; i < this.etape; i++) {
 			System.out.println("Etape " + i + " : ");
 			System.out.println(resString[i]);
 		}
-
-		
 	}
 	
 	private String solverSat() {
@@ -112,11 +110,8 @@ public class SATSearch extends ASP {
 				return "";
 			}
 		} catch (TimeoutException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return null;
 		}
-
-		return "";
 	}
 	
 	private void genererDisjonction() {
@@ -235,24 +230,26 @@ public class SATSearch extends ASP {
 		genererTransition();
 		genererDisjonction();
 		this.etape++;
-		if(this.MIN_STEP > this.etape)
+		if (this.MIN_STEP > this.etape) {
 			this.search();
-		else {
+		} else {
 			int save = this.clauses.size();
 			genererGoal(pb.getGoal());
 			super.getStatistics().setTimeToEncode(System.currentTimeMillis() - time);
-			time= System.currentTimeMillis();
+			time = System.currentTimeMillis();
 
 			String res = solverSat();
 			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
 			
-			if(res == "") {
+			if (res == null) {
+				// @todo handle timeout, non solvable
+			} else if (res == "") {
 				for(int i = this.clauses.size() - 1; i >= save; i--)
 					this.clauses.remove(i);
 				this.search();
-			}
-			else
+			} else {
 				afficheFinal(res);
+			}
 		}
 	}
 	
