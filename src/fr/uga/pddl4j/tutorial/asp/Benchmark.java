@@ -1,7 +1,6 @@
 package fr.uga.pddl4j.tutorial.asp;
 
 import java.io.File;
-import java.nio.file.Path;
 
 public class Benchmark {
 
@@ -12,14 +11,11 @@ public class Benchmark {
         File file = new File(PATH);
         File[] files = file.listFiles();
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].isDirectory()) {
-                    start(files[i].toPath().toString());
-                    return;
-                } else {
-                    createArgs(files, tg);
-                }
-            }
+	        if (files[0].isDirectory()) {
+	            start(files[0].toPath().toString());
+	            return;
+	        } else 
+	            createArgs(files, tg);
         }
         tg.trace();
 	}
@@ -39,17 +35,12 @@ public class Benchmark {
 			System.exit(1);
 		}
 		String [] toAdd = {"-o", domaine, "-f", ""};
-		System.out.println(files.length);
 		for (File f : files) {
 			String path = f.toString();
 			if(path != domaine) {
 				toAdd[3] = path;
-				System.out.println(f.getName());
-				tg.add(toAdd, f.getName());
+				tg.add(toAdd, f.getPath());
 			}	
 		}
 	}
-	
-	
-
 }

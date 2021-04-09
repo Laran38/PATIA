@@ -22,8 +22,7 @@ import fr.uga.pddl4j.util.Plan;
 public class SATSearch extends ASP {
 	
 	private static final long serialVersionUID = 1L;
-	private long timeToEncode = 0;
-	private static final int TIMEOUT = 300;
+	private static final int TIMEOUT = 3;
 	private final int MIN_STEP;
 	private final int tailleFact;
 	private final List<BitOp> operators;
@@ -32,7 +31,8 @@ public class SATSearch extends ASP {
 	private ArrayList<ArrayList<Integer>> clauses;
 	private Integer etape;
 	private long time;
-
+	private long timeToEncode = 0;
+	
 	public SATSearch(String[] args) {
 		super(args);
 		this.numberGenerator = new IndexFactory();		
@@ -229,7 +229,7 @@ public class SATSearch extends ASP {
 			try {
 				res = solverSat();
 			} catch (Exception e) {
-				super.getStatistics().setTimeToSearch(TIMEOUT * etape);
+				super.getStatistics().setTimeToSearch(-1);
 				return;
 			}
 			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);

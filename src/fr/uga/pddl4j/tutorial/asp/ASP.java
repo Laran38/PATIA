@@ -55,6 +55,8 @@ abstract public class ASP extends AbstractStateSpacePlanner {
 	}
 		
 	protected static Properties gererOptions(String[] args) {
+		if(args[0] == "-p")
+			System.out.println("ok");
 		Properties arg = StateSpacePlanner.getDefaultArguments();
 		String type;
 		Object value;
@@ -136,6 +138,7 @@ abstract public class ASP extends AbstractStateSpacePlanner {
 	}
 	
 	public long timeUse() {
+		if(this.getStatistics().getTimeToSearch() == -1) return -1;
 		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse() + this.getStatistics().getTimeToSearch();
 	}
 	
@@ -150,7 +153,7 @@ abstract public class ASP extends AbstractStateSpacePlanner {
 	}
 	
 	public static void main(String[] args) {
-		new AStarSolver(args);
+	 	ASP.gererOptions(args);
 		
 	}
 
