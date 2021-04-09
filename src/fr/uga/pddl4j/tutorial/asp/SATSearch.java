@@ -23,7 +23,7 @@ public class SATSearch extends ASP {
 	
 	private static final long serialVersionUID = 1L;
 	private long timeToEncode = 0;
-	private static final int TIMEOUT = 100;
+	private static final int TIMEOUT = 300;
 	private final int MIN_STEP;
 	private final int tailleFact;
 	private final List<BitOp> operators;
@@ -229,7 +229,7 @@ public class SATSearch extends ASP {
 			try {
 				res = solverSat();
 			} catch (Exception e) {
-				super.getStatistics().setTimeToSearch(TIMEOUT);
+				super.getStatistics().setTimeToSearch(TIMEOUT * etape);
 				return;
 			}
 			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
