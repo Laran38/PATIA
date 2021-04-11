@@ -77,7 +77,9 @@ abstract public class ASP extends AbstractStateSpacePlanner {
 				arg.put(type, value);
 				break;
 			case "-p": 
-				Benchmark.start(Benchmark.PATH);
+				TraceGraphe tracer = new TraceGraphe();
+				Benchmark.start(Benchmark.PATH, tracer);
+				tracer.closeFW();
 				return null;
 			case "-w": 
 				value = Double.parseDouble(args[i + 1]);
