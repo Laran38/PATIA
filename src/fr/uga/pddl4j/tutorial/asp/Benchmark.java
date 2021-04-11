@@ -1,30 +1,39 @@
 package fr.uga.pddl4j.tutorial.asp;
 
 import java.io.File;
-import java.nio.file.Path;
 
 public class Benchmark {
 
-	static final String PATH = "File/";
-	
-	public static void start(String PATH) {
-		TraceGraphe tg = new TraceGraphe();
+	public static final String PATH = "FileBenchmark/";
+	/*
+	 * Methode pour commencer le benchmark
+	 * Elle commence par un fichier donner dans le PATH
+	 * Elle a aussi besoin d'un traceur pour enregistrer les donnees dans un fichier csv
+	 * 
+	 */
+	public static void start(String PATH, TraceGraphe tg) {
+		//ouverture du ficher
         File file = new File(PATH);
         File[] files = file.listFiles();
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].isDirectory()) {
-                    start(files[i].toPath().toString());
-                    return;
-                } else {
-                    createArgs(files, tg);
-                }
-            }
+        	//Si c'est un repertoire on le parcours
+	        if (files[0].isDirectory()) {
+	            start(files[0].toPath().toString(), tg);
+	            return;
+	        }
+	        //Sinon on creer les arguments du fichiers, afin de pouvoir lancer la recherche
+	        else 
+	            createArgs(files, tg);
         }
-        tg.trace();
+        //tg.closeFW();
 	}
 
+	
+	/*
+	 * Creation des arguments
+	 */
 	private static void createArgs(File[] files, TraceGraphe tg) {
+		//Recherche du fichier domaine
 		String domaine = "";
 		for (File f : files) {
 			String path = f.toString();
@@ -38,18 +47,19 @@ public class Benchmark {
 			System.out.println("Pas de fichier contenant un domaine, affichage impossible");
 			System.exit(1);
 		}
+		//Initialisation de la ligne d'argument, il ne manque que le probleme
 		String [] toAdd = {"-o", domaine, "-f", ""};
-		System.out.println(files.length);
+		//Iteration sur tout les problemes 
 		for (File f : files) {
 			String path = f.toString();
 			if(path != domaine) {
+				//Affichage du fichier afin de savoir l'etat de la recherche, cette derniere pouvant etre lente
+				System.out.println(f.getPath());
+				//Mise a jour du probleme dans la ligne d'option
 				toAdd[3] = path;
-				System.out.println(f.getName());
-				tg.add(toAdd, f.getName());
+				//Envoie de la ligne au traceur, pour qu'il puisse initialiser et traiter les solveurs
+				tg.add(toAdd, f.getPath());
 			}	
 		}
 	}
-	
-	
-
 }
