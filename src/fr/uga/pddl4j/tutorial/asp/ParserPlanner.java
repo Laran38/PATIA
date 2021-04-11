@@ -29,7 +29,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 	public ParserPlanner(String[] args) {
 		this.arguments = gererOptions(args);
 		this.time = System.currentTimeMillis();
-		this.pb = this.parse(args, new TraceGraphe());
+		this.pb = this.parse(args);
 		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
 	}
 
@@ -41,7 +41,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 	/*
 	 * Parse le problème.
 	 */
-	public CodedProblem parse(String[] args, TraceGraphe tg) {
+	public CodedProblem parse(String[] args) {
 		time = System.currentTimeMillis();
 		final Properties arguments = ParserPlanner.gererOptions(args);
 		if (arguments == null) {
