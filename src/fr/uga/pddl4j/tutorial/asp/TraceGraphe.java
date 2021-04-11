@@ -2,19 +2,19 @@ package fr.uga.pddl4j.tutorial.asp;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map.Entry;
 
 import javax.swing.JFrame;
 
 
 public class TraceGraphe extends JFrame {
+
+	private static final long serialVersionUID = 1L;
+
 	/*
 	 * Nom du probleme relie au temps mit par l'ASP [0] et par le SAT [1]
 	 */
 	private final String PATH = "./toPlot.csv";
 	private FileWriter fw;
-	
 	
 	public TraceGraphe() {
 		try {
@@ -25,9 +25,8 @@ public class TraceGraphe extends JFrame {
 		}
 	}
 	
-	
 	/*
-	 * Generer les CSV, on utilisera un programme python pour afficher et tracer les courbes
+	 * Génère les CSV, on utilisera un programme python pour afficher et tracer les courbes
 	 */
 	public void add(String[] args, String name) {
 	
@@ -46,7 +45,6 @@ public class TraceGraphe extends JFrame {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 
@@ -56,6 +54,5 @@ public class TraceGraphe extends JFrame {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}    
 }

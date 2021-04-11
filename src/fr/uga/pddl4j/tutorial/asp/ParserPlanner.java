@@ -121,7 +121,6 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 	/*
 	 * Affichage de toutes les options possible
 	 */
-	
 	private static void afficherAide() {
 		StringBuilder sb = new StringBuilder();
 		sb = sb.append("\nHelp:\n");
@@ -142,7 +141,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		Planner.getLogger().trace(sb);
 	}
 	
-	/*
+	/**
 	 * Renvoie si un fichier est valide pour le parser	
 	 */
 	private static boolean estValide(int i, String[] fichiers) {
@@ -153,7 +152,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		return i < fichiers.length && existe; 
 	}
 	
-	/*
+	/**
 	 * Parcours les options et agis differement selon ce qu'il recoit		
 	 */
 	protected static Properties gererOptions(String[] args) {
@@ -198,16 +197,15 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		return arg.get(aSpecifie) != null;
 	}
 			
-	/*
+	/**
 	 * Recupere le temps mis par le solver, renvoie -1 si ce dernier n'a pas fini
 	 */
-	
 	public long timeUse() {
 		if(this.getStatistics().getTimeToSearch() == -1) return -1;
 		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse() + this.getStatistics().getTimeToSearch();
 	}
 	
-	/*
+	/**
 	 * Trace le plan selon un probleme donne
 	 */
 	public void search() {
