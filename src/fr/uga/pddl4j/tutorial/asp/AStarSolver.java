@@ -1,6 +1,5 @@
 package fr.uga.pddl4j.tutorial.asp;
 
-
 import fr.uga.pddl4j.encoding.CodedProblem;
 import fr.uga.pddl4j.heuristics.relaxation.Heuristic;
 import fr.uga.pddl4j.planners.statespace.StateSpacePlanner;
@@ -10,6 +9,8 @@ import fr.uga.pddl4j.planners.statespace.search.strategy.StateSpaceStrategy;
 import fr.uga.pddl4j.util.Plan;
 
 public final class AStarSolver extends ParserPlanner {
+
+	private static final long serialVersionUID = 1L;
 
 	public AStarSolver(String[] args) {
 		super(args);
