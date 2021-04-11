@@ -1,8 +1,8 @@
-import fr.uga.pddl4j.tutorial.asp.ParserPlanner;
-import fr.uga.pddl4j.tutorial.asp.Benchmark;
+import fr.uga.pddl4j.tutorial.ParserPlanner;
 import fr.uga.pddl4j.tutorial.asp.AStarSolver;
-import fr.uga.pddl4j.tutorial.asp.SATSearch;
-import fr.uga.pddl4j.tutorial.asp.TraceGraphe;
+import fr.uga.pddl4j.tutorial.sat.SATSearch;
+import fr.uga.pddl4j.tutorial.util.TraceGraphe;
+import fr.uga.pddl4j.tutorial.util.Benchmark;
 
 import java.util.Arrays;
 

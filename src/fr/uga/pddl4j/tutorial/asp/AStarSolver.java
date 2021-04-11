@@ -1,5 +1,7 @@
 package fr.uga.pddl4j.tutorial.asp;
 
+import fr.uga.pddl4j.tutorial.ParserPlanner;
+
 import fr.uga.pddl4j.encoding.CodedProblem;
 import fr.uga.pddl4j.heuristics.relaxation.Heuristic;
 import fr.uga.pddl4j.planners.statespace.StateSpacePlanner;

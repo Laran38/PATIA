@@ -1,4 +1,7 @@
-package fr.uga.pddl4j.tutorial.asp;
+package fr.uga.pddl4j.tutorial.sat;
+
+import fr.uga.pddl4j.tutorial.ParserPlanner;
+import fr.uga.pddl4j.tutorial.util.*;
 
 import java.util.ArrayList;
 import java.util.List;

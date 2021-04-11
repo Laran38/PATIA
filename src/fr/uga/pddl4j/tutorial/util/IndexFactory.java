@@ -1,4 +1,4 @@
-package fr.uga.pddl4j.tutorial.asp;
+package fr.uga.pddl4j.tutorial.util;
 
 /**
  * Cette factory nous permet de gerer les indices que nous passons au solver SAT

@@ -1,4 +1,7 @@
-package fr.uga.pddl4j.tutorial.asp;
+package fr.uga.pddl4j.tutorial.util;
+
+import fr.uga.pddl4j.tutorial.asp.AStarSolver;
+import fr.uga.pddl4j.tutorial.sat.SATSearch;
 
 import java.io.FileWriter;
 import java.io.IOException;

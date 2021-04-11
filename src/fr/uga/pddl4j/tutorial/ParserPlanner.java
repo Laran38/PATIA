@@ -1,4 +1,4 @@
-package fr.uga.pddl4j.tutorial.asp;
+package fr.uga.pddl4j.tutorial;
 
 import java.io.File;
 import java.util.Properties;
