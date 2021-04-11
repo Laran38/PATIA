@@ -38,43 +38,9 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		this.arguments = arguments;
 	}
 
-	public static void start(String[] args) {
-		String arg = args[0];
-		switch (arg) {
-		case "-a":
-			AStarSolver as = new AStarSolver(getOptions(args));
-			as.search();
-			return;
-		case "-s":
-			SATSearch ss = new SATSearch(getOptions(args));
-			ss.search();
-			return;
-		case "-p":
-			TraceGraphe tg = new TraceGraphe();
-			Benchmark.start(Benchmark.PATH, tg);
-			tg.closeFW();
-			return;
-		default:
-			afficherAide();
-			return;
-		}
-
-	}
-
 	/*
-	 * Eneleve le mode et ne recupere que les options
+	 * Parse le problème.
 	 */
-	private static String[] getOptions(String[] args) {
-		String[] liste_arg = new String[args.length - 1];
-		for (int i = 1; i < args.length; i++)
-			liste_arg[i - 1] = args[i];
-		return liste_arg;
-	}
-
-	/*
-	 * Programme principal
-	 */
-
 	public CodedProblem parse(String[] args, TraceGraphe tg) {
 		time = System.currentTimeMillis();
 		final Properties arguments = ParserPlanner.gererOptions(args);
@@ -85,6 +51,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		final ProblemFactory fact = ProblemFactory.getInstance();
 		File domain = (File) arguments.get(Planner.DOMAIN);
 		File problem = (File) arguments.get(Planner.PROBLEM);
+
 		try {
 			ErrorManager em;
 			em = fact.parse(domain, problem);
@@ -97,6 +64,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 			Planner.getLogger().trace("\nunexpected error when parsing the PDDL planning problem description.");
 			System.exit(0);
 		}
+
 		final CodedProblem pb = fact.encode();
 		Planner.getLogger().trace("\nencoding problem done successfully (" + pb.getOperators().size() + " ops, "
 				+ pb.getRelevantFacts().size() + " facts)\n");
@@ -113,7 +81,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 	/*
 	 * Affichage de toutes les options possible
 	 */
-	private static void afficherAide() {
+	public static void afficherAide() {
 		StringBuilder sb = new StringBuilder();
 		sb = sb.append("\nHelp:\n");
 		sb = sb.append("options description  \n");
