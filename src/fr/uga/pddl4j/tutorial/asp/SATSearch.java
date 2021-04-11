@@ -33,10 +33,10 @@ public class SATSearch extends ParserPlanner {
 	private Integer etape;
 	private long time;
 	private long timeToEncode = 0;
-	
+
 	public SATSearch(String[] args) {
 		super(args);
-		this.numberGenerator = new IndexFactory();		
+		this.numberGenerator = new IndexFactory();
 		this.operators = pb.getOperators();
 		this.revelantFacts = pb.getRelevantFacts();
 		this.etape = 0;
@@ -49,8 +49,7 @@ public class SATSearch extends ParserPlanner {
 		final BitState init = new BitState(pb.getInit());
 		this.MIN_STEP = heuristic.estimate(init, pb.getGoal());
 	}
-	
-	
+
 	/**
 	 * Affichage du resultat sur la sortie standart
 	 */
@@ -58,8 +57,9 @@ public class SATSearch extends ParserPlanner {
 		// Decoupage du resultat donner par le sat Solver
 		String[] rest = res.split(" ");
 
-		// Tableau associant une action et son etape, cela permettra d'avoir le bon ordre
-		String[] resString = new String[this.etape + 1]; 
+		// Tableau associant une action et son etape, cela permettra d'avoir le bon
+		// ordre
+		String[] resString = new String[this.etape + 1];
 
 		for (String courant : rest) {
 			// Recuperation des valeurs necessaires grace a la factory
@@ -67,9 +67,11 @@ public class SATSearch extends ParserPlanner {
 			int index = Math.abs(numberGenerator.getIndex(value));
 			int etape = Math.abs(numberGenerator.getEtape(value));
 
-			// Si l'index est une action positive, alors elle doit etre faite, et donc etre affichee
+			// Si l'index est une action positive, alors elle doit etre faite, et donc etre
+			// affichee
 			if (index > this.numberOfFact && value > 0) {
-				// Reduction de l'indice, afin que ce dernier corresponde a l'indice dans la liste des operations
+				// Reduction de l'indice, afin que ce dernier corresponde a l'indice dans la
+				// liste des operations
 				index -= this.numberOfFact;
 				// recuperation de l'action a faire
 				BitOp operation = operators.get(index - 1);
@@ -84,9 +86,9 @@ public class SATSearch extends ParserPlanner {
 			System.out.println("Etape " + i + " : ");
 			System.out.println(resString[i]);
 		}
-	
+
 	}
-	
+
 	private String solverSat() throws Exception {
 		final int MAXVAR = 1000000;
 		final int NBCLAUSES = 500000;
@@ -105,21 +107,20 @@ public class SATSearch extends ParserPlanner {
 					clause[j] = clauses.get(i).get(j);
 				}
 				solver.addClause(new VecInt(clause));
-			}
-			catch (ContradictionException e) {
+			} catch (ContradictionException e) {
 				e.printStackTrace();
 			}
 		}
 
 		IProblem problem = solver;
-		
-		if (problem.isSatisfiable()) 
+
+		if (problem.isSatisfiable())
 			return reader.decode(problem.model());
-		else 
+		else
 			return "";
-		
+
 	}
-	
+
 	/**
 	 * Fait en sorte qu'une action soit une unique a une certaine etape
 	 */
@@ -137,11 +138,12 @@ public class SATSearch extends ParserPlanner {
 				// Ajout dans le solveur sat la clause cree
 				clauses.add(toAdd);
 			}
-		}		
+		}
 	}
 
 	/**
-	 * Generation des transitions entre les predicats courant et les futures actions possible
+	 * Generation des transitions entre les predicats courant et les futures actions
+	 * possible
 	 */
 	private void genererTransition() {
 		// Parcours de tous les predicats
@@ -152,33 +154,34 @@ public class SATSearch extends ParserPlanner {
 			// Decalage par apport au fact
 			int index = this.numberOfFact;
 
-			// Parcours de toutes les actions 
+			// Parcours de toutes les actions
 			for (BitOp ai : operators) {
 				BitExp effect = ai.getCondEffects().get(0).getEffects();
 
-				// Si le predicat courant est une condition positive, on creer son indice et on l'ajoute 
+				// Si le predicat courant est une condition positive, on creer son indice et on
+				// l'ajoute
 				if (effect.getPositive().get(i))
 					indexPos.add(numberGenerator.generateIndex(index, etape, true));
 
-				// Si le predicat courant est une condition negative, on creer son indice et on l'ajoute 
+				// Si le predicat courant est une condition negative, on creer son indice et on
+				// l'ajoute
 				if (effect.getNegative().get(i))
 					indexNeg.add(numberGenerator.generateIndex(index, etape, true));
-				index ++;
+				index++;
 			}
 
 			int i1 = numberGenerator.generateIndex(i, etape, true);
 			int i2 = numberGenerator.generateIndex(i, etape + 1, true);
 
 			// Transformation des transitions crees, et ajout dans le sat
-			implicationTransition(i1 * -1, i2 * - 1, indexPos);
+			implicationTransition(i1 * -1, i2 * -1, indexPos);
 			implicationTransition(i1, i2, indexNeg);
 		}
-		
+
 	}
 
 	/**
-	 * Resoud les implications de la forme v1 => v2
-	 * Il suffit d'ajouter -v1 V v2
+	 * Resoud les implications de la forme v1 => v2 Il suffit d'ajouter -v1 V v2
 	 */
 	private void implicationTransition(int f1, int f2, ArrayList<Integer> index) {
 		index.add(f1 * -1);
@@ -189,7 +192,7 @@ public class SATSearch extends ParserPlanner {
 	private void genererActions() {
 		int posCourante = revelantFacts.size();
 
-		for(BitOp ai : operators) {
+		for (BitOp ai : operators) {
 			ArrayList<Integer> toAdd = new ArrayList<>();
 			int indiceAction = numberGenerator.generateIndex(posCourante, this.etape, true);
 
@@ -209,21 +212,21 @@ public class SATSearch extends ParserPlanner {
 			}
 			// On resoud l'implication
 			implication(indiceAction, toAdd);
-			posCourante ++;
+			posCourante++;
 		}
 	}
 
 	private void implication(int indiceAction, ArrayList<Integer> toAdd) {
 		indiceAction *= -1;
 		ArrayList<Integer> toArr;
-		for(Integer i : toAdd) {
+		for (Integer i : toAdd) {
 			toArr = new ArrayList<>();
 			toArr.add(indiceAction);
 			toArr.add(i);
 			clauses.add(toArr);
-		}	
+		}
 	}
-	
+
 	private void genererGoal(BitExp bitExp) {
 		ArrayList<Integer> allInt;
 		// Parcours des revelantFacts
@@ -240,18 +243,19 @@ public class SATSearch extends ParserPlanner {
 				this.clauses.add(allInt);
 			}
 			// On ne fait rien sinon
-		}	
+		}
 	}
-	
+
 	private void genererInit(BitExp bitExp) {
 		ArrayList<Integer> allInt;
-		// Parcours des predicats, ajout du predicat si il fait partie de l'initialisation positive
+		// Parcours des predicats, ajout du predicat si il fait partie de
+		// l'initialisation positive
 		// On ajoute son negatif sinon
 		for (int i = 0; i < revelantFacts.size(); i++) {
 			allInt = new ArrayList<>();
 			allInt.add(numberGenerator.generateIndex(i, this.etape, bitExp.getPositive().get(i)));
 			this.clauses.add(allInt);
-		}	
+		}
 	}
 
 	/**
@@ -260,62 +264,66 @@ public class SATSearch extends ParserPlanner {
 	@Override
 	public void search() {
 		// Si on est a la premiere etape alors ajoute les predicats initiaux
-		if(this.etape == 0) {
+		if (this.etape == 0) {
 			timeToEncode = System.currentTimeMillis();
 			genererInit(pb.getInit());
 		}
-		// On genere en suite les actions et les predicats qu'elle impliquent a l'etape K
+		// On genere en suite les actions et les predicats qu'elle impliquent a l'etape
+		// K
 		genererActions();
-		// On fait en sorte de faire les transitions entre les actions a l'etape K et l'etape K+1
+		// On fait en sorte de faire les transitions entre les actions a l'etape K et
+		// l'etape K+1
 		genererTransition();
 		// On fait en sorte qu'a l'etape K, une et une seule action est possible
 		genererDisjonction();
 		// Une fois tout cela fait, on peut passer a l'etape suivante
 		this.etape++;
-		// Si on a pas depasser le seuil de l'heuristique alors on recommence sans passer par le solveur SAT
-		if(this.MIN_STEP > this.etape)
+		// Si on a pas depasser le seuil de l'heuristique alors on recommence sans
+		// passer par le solveur SAT
+		if (this.MIN_STEP > this.etape)
 			this.search();
 		else {
 			// Sinon on Genere les clauses pour les objectifs
-			// On doit avant tout sauvegarder ceux qui ont ete ajoute, afin de pouvoir les enelever si le probleme n est pas satisfaible
+			// On doit avant tout sauvegarder ceux qui ont ete ajoute, afin de pouvoir les
+			// enelever si le probleme n est pas satisfaible
 			int save = this.clauses.size();
 			genererGoal(pb.getGoal());
 			// On met a jour le chronometre
 			super.getStatistics().setTimeToEncode(System.currentTimeMillis() - timeToEncode);
-			time= System.currentTimeMillis();
+			time = System.currentTimeMillis();
 
 			String res;
 			try {
 				res = solverSat();
 			} catch (Exception e) {
-				//Si le timeout a ete depasser on set le temps pour solve a -1 et on arrete
+				// Si le timeout a ete depasser on set le temps pour solve a -1 et on arrete
 				super.getStatistics().setTimeToSearch(-1);
 				return;
 			}
 			super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
-			//Sinon si il est insatisfaisable on supprime les clauses finales et on recommence
-			if(res == "") {
-				
-				for(int i = this.clauses.size() - 1; i >= save; i--)
+			// Sinon si il est insatisfaisable on supprime les clauses finales et on
+			// recommence
+			if (res == "") {
+
+				for (int i = this.clauses.size() - 1; i >= save; i--)
 					this.clauses.remove(i);
 				this.search();
-			}
-			else
-				//Sinon on affiche le resultat et on sort
+			} else
+				// Sinon on affiche le resultat et on sort
 				display(res);
 		}
 	}
-	
+
 	/**
-	 * Recherche par CodedProblem, obligatiore par la classe mere, nous ne l'utilisons pas
-	 */ 
+	 * Recherche par CodedProblem, obligatiore par la classe mere, nous ne
+	 * l'utilisons pas
+	 */
 	@Override
 	public Plan search(CodedProblem arg) {
 		this.pb = arg;
 		this.search();
 		return null;
 	}
-
 
 	public CodedProblem getPB() {
 		return this.pb;
