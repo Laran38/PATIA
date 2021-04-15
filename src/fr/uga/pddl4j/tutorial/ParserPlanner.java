@@ -39,7 +39,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 	}
 
 	/*
-	 * Parse le problème.
+	 * Parse le probleme.
 	 */
 	public CodedProblem parse(String[] args) {
 		time = System.currentTimeMillis();
@@ -74,7 +74,6 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 					.trace(String.format("goal can be simplified to FALSE." + "no search will solve it%n%n"));
 			System.exit(0);
 		}
-
 		return pb;
 	}
 

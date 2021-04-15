@@ -4,7 +4,7 @@ import java.io.File;
 
 public class Benchmark {
 
-	public static final String PATH = "FileBenchmark/";
+	public static final String PATH = "File/";
 
 	/**
 	 * Methode pour commencer le benchmark. Elle commence par un fichier donne dans

@@ -21,14 +21,14 @@ public class TraceGraphe extends JFrame {
 	public TraceGraphe() {
 		try {
 			fw = new FileWriter(PATH);
-			fw.append("File; AStar; SAT");
+			fw.append("File; AStar; SAT\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Génère les CSV, on utilisera un programme python pour afficher et tracer les
+	 * Genere les CSV, on utilisera un programme python pour afficher et tracer les
 	 * courbes
 	 */
 	public void add(String[] args, String name) {

@@ -9,11 +9,12 @@ import java.util.Arrays;
 public class Launcher {
 
 	/**
-	 * Traite la liste d'arguments et exécute une des options: ASP, SAT, Benchmark
+	 * Traite la liste d'arguments et execute une des options: ASP, SAT, Benchmark
 	 * (ASP et SAT).
 	 * 
 	 * @param args
 	 */
+
 	public static void start(String[] args) {
 		if (args.length < 1) {
 			ParserPlanner.afficherAide();
@@ -45,4 +46,5 @@ public class Launcher {
 	public static void main(String[] args) {
 		start(args);
 	}
+
 }

@@ -1,8 +1,5 @@
 package fr.uga.pddl4j.tutorial.sat;
 
-import fr.uga.pddl4j.tutorial.ParserPlanner;
-import fr.uga.pddl4j.tutorial.util.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +13,8 @@ import org.sat4j.specs.ISolver;
 import fr.uga.pddl4j.encoding.CodedProblem;
 import fr.uga.pddl4j.heuristics.relaxation.Heuristic;
 import fr.uga.pddl4j.heuristics.relaxation.HeuristicToolKit;
+import fr.uga.pddl4j.tutorial.ParserPlanner;
+import fr.uga.pddl4j.tutorial.util.IndexFactory;
 import fr.uga.pddl4j.util.BitExp;
 import fr.uga.pddl4j.util.BitOp;
 import fr.uga.pddl4j.util.BitState;
@@ -24,16 +23,18 @@ import fr.uga.pddl4j.util.Plan;
 
 public class SATSearch extends ParserPlanner {
 
+	private static final int MAX = 500;
+
 	private static final long serialVersionUID = 1L;
 
 	private static final int TIMEOUT = 300;
+	private ArrayList<ArrayList<Integer>> clauses;
+	private Integer etape;
 	private final int MIN_STEP;
+	private final IndexFactory numberGenerator;
 	private final int numberOfFact;
 	private final List<BitOp> operators;
 	private final List<IntExp> revelantFacts;
-	private final IndexFactory numberGenerator;
-	private ArrayList<ArrayList<Integer>> clauses;
-	private Integer etape;
 	private long time;
 	private long timeToEncode = 0;
 
@@ -92,44 +93,40 @@ public class SATSearch extends ParserPlanner {
 
 	}
 
-	private String solverSat() throws Exception {
-		final int MAXVAR = 1000000;
-		final int NBCLAUSES = 500000;
+	private void genererActions() {
+		int posCourante = revelantFacts.size();
 
-		ISolver solver = SolverFactory.newDefault();
-		DimacsReader reader = new DimacsReader(solver);
+		for (BitOp ai : operators) {
+			ArrayList<Integer> toAdd = new ArrayList<>();
+			int indiceAction = numberGenerator.generateIndex(posCourante, this.etape, true);
 
-		solver.newVar(MAXVAR);
-		solver.setExpectedNumberOfClauses(NBCLAUSES);
-		solver.setTimeout(TIMEOUT);
-
-		for (int i = 0; i < clauses.size(); i++) {
-			try {
-				int[] clause = new int[clauses.get(i).size()];
-				for (int j = 0; j < clauses.get(i).size(); j++) {
-					clause[j] = clauses.get(i).get(j);
-				}
-				solver.addClause(new VecInt(clause));
-			} catch (ContradictionException e) {
-				e.printStackTrace();
+			for (int i = 0; i < revelantFacts.size(); i++) {
+				// On recupere les predicats et on les ajoutes selon si ils sont positif ou non
+				BitExp precondition = ai.getPreconditions();
+				if (precondition.getPositive().get(i))
+					toAdd.add(numberGenerator.generateIndex(i, this.etape, true));
+				if (precondition.getNegative().get(i))
+					toAdd.add(numberGenerator.generateIndex(i, this.etape, false));
+				// On recupere les Effets et on les ajoutes selon si ils sont positif ou non
+				BitExp effect = ai.getCondEffects().get(0).getEffects();
+				if (effect.getPositive().get(i))
+					toAdd.add(numberGenerator.generateIndex(i, this.etape + 1, true));
+				if (effect.getNegative().get(i))
+					toAdd.add(numberGenerator.generateIndex(i, this.etape + 1, false));
 			}
+			// On resoud l'implication
+			implication(indiceAction, toAdd);
+			posCourante++;
 		}
-
-		IProblem problem = solver;
-
-		if (problem.isSatisfiable())
-			return reader.decode(problem.model());
-		else
-			return "";
-
 	}
 
 	/**
 	 * Fait en sorte qu'une action soit une unique a une certaine etape
 	 */
-	private void genererDisjonction() {
+	private boolean genererDisjonction() {
 		ArrayList<Integer> toAdd;
-
+		if (operators.size() > MAX)
+			return false;
 		for (int i = 0; i < operators.size(); i++) {
 			for (int j = i + 1; j <= operators.size(); j++) {
 				// Creation d'une nouvelle clause
@@ -141,6 +138,38 @@ public class SATSearch extends ParserPlanner {
 				// Ajout dans le solveur sat la clause cree
 				clauses.add(toAdd);
 			}
+		}
+		return true;
+	}
+
+	private void genererGoal(BitExp bitExp) {
+		ArrayList<Integer> allInt;
+		// Parcours des revelantFacts
+		for (int i = 0; i < revelantFacts.size(); i++) {
+			allInt = new ArrayList<>();
+			// Si l'instance est positive alors on ajoute le predicat
+			if (bitExp.getPositive().get(i)) {
+				allInt.add(numberGenerator.generateIndex(i, this.etape, true));
+				this.clauses.add(allInt);
+			}
+			// Si il est negatif on a joute la negation du predicat
+			else if (bitExp.getNegative().get(i)) {
+				allInt.add(numberGenerator.generateIndex(i, this.etape, false));
+				this.clauses.add(allInt);
+			}
+			// On ne fait rien sinon
+		}
+	}
+
+	private void genererInit(BitExp bitExp) {
+		ArrayList<Integer> allInt;
+		// Parcours des predicats, ajout du predicat si il fait partie de
+		// l'initialisation positive
+		// On ajoute son negatif sinon
+		for (int i = 0; i < revelantFacts.size(); i++) {
+			allInt = new ArrayList<>();
+			allInt.add(numberGenerator.generateIndex(i, this.etape, bitExp.getPositive().get(i)));
+			this.clauses.add(allInt);
 		}
 	}
 
@@ -183,40 +212,8 @@ public class SATSearch extends ParserPlanner {
 
 	}
 
-	/**
-	 * Resoud les implications de la forme v1 => v2 Il suffit d'ajouter -v1 V v2
-	 */
-	private void implicationTransition(int f1, int f2, ArrayList<Integer> index) {
-		index.add(f1 * -1);
-		index.add(f2);
-		clauses.add(index);
-	}
-
-	private void genererActions() {
-		int posCourante = revelantFacts.size();
-
-		for (BitOp ai : operators) {
-			ArrayList<Integer> toAdd = new ArrayList<>();
-			int indiceAction = numberGenerator.generateIndex(posCourante, this.etape, true);
-
-			for (int i = 0; i < revelantFacts.size(); i++) {
-				// On recupere les predicats et on les ajoutes selon si ils sont positif ou non
-				BitExp precondition = ai.getPreconditions();
-				if (precondition.getPositive().get(i))
-					toAdd.add(numberGenerator.generateIndex(i, this.etape, true));
-				if (precondition.getNegative().get(i))
-					toAdd.add(numberGenerator.generateIndex(i, this.etape, false));
-				// On recupere les Effets et on les ajoutes selon si ils sont positif ou non
-				BitExp effect = ai.getCondEffects().get(0).getEffects();
-				if (effect.getPositive().get(i))
-					toAdd.add(numberGenerator.generateIndex(i, this.etape + 1, true));
-				if (effect.getNegative().get(i))
-					toAdd.add(numberGenerator.generateIndex(i, this.etape + 1, false));
-			}
-			// On resoud l'implication
-			implication(indiceAction, toAdd);
-			posCourante++;
-		}
+	public CodedProblem getPB() {
+		return this.pb;
 	}
 
 	private void implication(int indiceAction, ArrayList<Integer> toAdd) {
@@ -230,35 +227,13 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
-	private void genererGoal(BitExp bitExp) {
-		ArrayList<Integer> allInt;
-		// Parcours des revelantFacts
-		for (int i = 0; i < revelantFacts.size(); i++) {
-			allInt = new ArrayList<>();
-			// Si l'instance est positive alors on ajoute le predicat
-			if (bitExp.getPositive().get(i)) {
-				allInt.add(numberGenerator.generateIndex(i, this.etape, true));
-				this.clauses.add(allInt);
-			}
-			// Si il est negatif on a joute la negation du predicat
-			else if (bitExp.getNegative().get(i)) {
-				allInt.add(numberGenerator.generateIndex(i, this.etape, false));
-				this.clauses.add(allInt);
-			}
-			// On ne fait rien sinon
-		}
-	}
-
-	private void genererInit(BitExp bitExp) {
-		ArrayList<Integer> allInt;
-		// Parcours des predicats, ajout du predicat si il fait partie de
-		// l'initialisation positive
-		// On ajoute son negatif sinon
-		for (int i = 0; i < revelantFacts.size(); i++) {
-			allInt = new ArrayList<>();
-			allInt.add(numberGenerator.generateIndex(i, this.etape, bitExp.getPositive().get(i)));
-			this.clauses.add(allInt);
-		}
+	/**
+	 * Resoud les implications de la forme v1 => v2 Il suffit d'ajouter -v1 V v2
+	 */
+	private void implicationTransition(int f1, int f2, ArrayList<Integer> index) {
+		index.add(f1 * -1);
+		index.add(f2);
+		clauses.add(index);
 	}
 
 	/**
@@ -278,7 +253,11 @@ public class SATSearch extends ParserPlanner {
 		// l'etape K+1
 		genererTransition();
 		// On fait en sorte qu'a l'etape K, une et une seule action est possible
-		genererDisjonction();
+		boolean b = genererDisjonction();
+		if (!b) {
+			super.getStatistics().setTimeToSearch(-1);
+			return;
+		}
 		// Une fois tout cela fait, on peut passer a l'etape suivante
 		this.etape++;
 		// Si on a pas depasser le seuil de l'heuristique alors on recommence sans
@@ -328,8 +307,36 @@ public class SATSearch extends ParserPlanner {
 		return null;
 	}
 
-	public CodedProblem getPB() {
-		return this.pb;
+	private String solverSat() throws Exception {
+		final int MAXVAR = 1000000;
+		final int NBCLAUSES = 500000;
+
+		ISolver solver = SolverFactory.newDefault();
+		DimacsReader reader = new DimacsReader(solver);
+
+		solver.newVar(MAXVAR);
+		solver.setExpectedNumberOfClauses(NBCLAUSES);
+		solver.setTimeout(TIMEOUT);
+
+		for (int i = 0; i < clauses.size(); i++) {
+			try {
+				int[] clause = new int[clauses.get(i).size()];
+				for (int j = 0; j < clauses.get(i).size(); j++) {
+					clause[j] = clauses.get(i).get(j);
+				}
+				solver.addClause(new VecInt(clause));
+			} catch (ContradictionException e) {
+				e.printStackTrace();
+			}
+		}
+
+		IProblem problem = solver;
+
+		if (problem.isSatisfiable())
+			return reader.decode(problem.model());
+		else
+			return "";
+
 	}
 
 }
