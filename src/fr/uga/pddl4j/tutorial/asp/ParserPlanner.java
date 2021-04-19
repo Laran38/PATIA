@@ -12,117 +12,76 @@ import fr.uga.pddl4j.planners.statespace.StateSpacePlanner;
 import fr.uga.pddl4j.util.Plan;
 
 abstract public class ParserPlanner extends AbstractStateSpacePlanner {
-	
+
 	private static final long serialVersionUID = 1L;
 	protected Properties arguments;
 	protected long time;
 	protected CodedProblem pb;
 	protected static String PATH = "";
-	
+
 	protected ParserPlanner() {
 	}
-	
-	/*
-	 * Constructeur Personnalise
-	 * Prend en entree les arguments 
-	 * Gere ces derniers
+
+	/**
 	 * Parse les arguments et enregistre le temps pour parser
 	 */
 
 	public ParserPlanner(String[] args) {
 		this.arguments = gererOptions(args);
 		this.time = System.currentTimeMillis();
-		this.pb = this.parse(args, new TraceGraphe());
+		this.pb = this.parse(args);
 		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
 	}
 
-	/*
-	 * Constructeur classique, initialise AbstractStateSpacePlanner et set les arguments
-	 */
-	
 	public ParserPlanner(final Properties arguments) {
-	    super();
-	    this.arguments = arguments;
-	}
-
-	public static void start(String[] args) {
-		String arg = args[0];
-		switch (arg) {
-		case "-a": 
-			AStarSolver as = new AStarSolver(getOptions(args));
-			as.search();
-			return;
-		case "-s": 
-			SATSearch ss =new SATSearch(getOptions(args));
-			ss.search();
-			return;
-		case "-p": 
-			TraceGraphe tg = new TraceGraphe();
-			Benchmark.start(Benchmark.PATH, tg);
-			tg.closeFW();
-			return;
-		default :
-			afficherAide();
-			return;
-		}
-
-	}
-	
-	/*
-	 * Eneleve le mode et ne recupere que les options
-	 */
-	private static String[] getOptions(String[] args) {
-		String[] liste_arg = new String[args.length - 1];
-		for (int i=1; i<args.length; i++)
-			liste_arg[i-1] = args[i];
-		return liste_arg;
+		super();
+		this.arguments = arguments;
 	}
 
 	/*
-	 * Programme principal 
+	 * Parse le problème.
 	 */
-	
-	public CodedProblem parse(String[] args, TraceGraphe tg) {
+	public CodedProblem parse(String[] args) {
 		time = System.currentTimeMillis();
 		final Properties arguments = ParserPlanner.gererOptions(args);
-		  if (arguments == null) {
-		    ParserPlanner.afficherAide();
-		    System.exit(0);
-		  }
-		  final ProblemFactory fact = ProblemFactory.getInstance();
-		  File domain = (File) arguments.get(Planner.DOMAIN);
-		  File problem = (File) arguments.get(Planner.PROBLEM);
-		  try {
-			  ErrorManager em;
-			  em = fact.parse(domain, problem);
-			  if(!em.isEmpty()) {
-				  em.printAll();
-				  Planner.getLogger().trace(em);
-			  	  System.exit(1);
-			  }
-		  }
-		  catch (Exception e) {
-			  Planner.getLogger().trace("\nunexpected error when parsing the PDDL planning problem description.");
-			  System.exit(0);
-		  }
-		  final CodedProblem pb = fact.encode();
-		  Planner.getLogger().trace("\nencoding problem done successfully (" 
-	  		    + pb.getOperators().size() + " ops, "
-	  		    + pb.getRelevantFacts().size() + " facts)\n");
-		  
-		  if (!pb.isSolvable()) {
-			  Planner.getLogger().trace(String.format("goal can be simplified to FALSE." 
-			                                            +  "no search will solve it%n%n"));
-			  System.exit(0);
-			}	
-		  return pb;
+		if (arguments == null) {
+			ParserPlanner.afficherAide();
+			System.exit(0);
+		}
+		final ProblemFactory fact = ProblemFactory.getInstance();
+		File domain = (File) arguments.get(Planner.DOMAIN);
+		File problem = (File) arguments.get(Planner.PROBLEM);
+
+		try {
+			ErrorManager em;
+			em = fact.parse(domain, problem);
+			if (!em.isEmpty()) {
+				em.printAll();
+				Planner.getLogger().trace(em);
+				System.exit(1);
+			}
+		} catch (Exception e) {
+			Planner.getLogger().trace("\nunexpected error when parsing the PDDL planning problem description.");
+			System.exit(0);
+		}
+
+		final CodedProblem pb = fact.encode();
+		Planner.getLogger().trace("\nencoding problem done successfully (" + pb.getOperators().size() + " ops, "
+				+ pb.getRelevantFacts().size() + " facts)\n");
+
+		if (!pb.isSolvable()) {
+			Planner.getLogger()
+					.trace(String.format("goal can be simplified to FALSE." + "no search will solve it%n%n"));
+			System.exit(0);
+		}
+
+		return pb;
 	}
 
 	/*
 	 * Affichage de toutes les options possible
 	 */
-	
-	private static void afficherAide() {
+	public static void afficherAide() {
 		StringBuilder sb = new StringBuilder();
 		sb = sb.append("\nHelp:\n");
 		sb = sb.append("options description  \n");
@@ -141,51 +100,54 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		sb = sb.append("-h    print this message \n");
 		Planner.getLogger().trace(sb);
 	}
-	
-	/*
-	 * Renvoie si un fichier est valide pour le parser	
+
+	/**
+	 * Renvoie si un fichier est valide pour le parser
 	 */
 	private static boolean estValide(int i, String[] fichiers) {
-		boolean existe = new File(fichiers[i+1]).exists();
-		if(!existe)
-			Planner.getLogger().trace("Error \nThe file "+fichiers[i+1]+" does not exist\n");
-			
-		return i < fichiers.length && existe; 
+		boolean existe = new File(fichiers[i + 1]).exists();
+		if (!existe)
+			Planner.getLogger().trace("Error \nThe file " + fichiers[i + 1] + " does not exist\n");
+
+		return i < fichiers.length && existe;
 	}
-	
-	/*
-	 * Parcours les options et agis differement selon ce qu'il recoit		
+
+	/**
+	 * Parcours les options et agis differement selon ce qu'il recoit
 	 */
 	protected static Properties gererOptions(String[] args) {
 		Properties arg = StateSpacePlanner.getDefaultArguments();
 		String type;
 		Object value;
-		for(int i=0; i < args.length; i+=2) {
+		for (int i = 0; i < args.length; i += 2) {
 			switch (args[i]) {
-			case "-o": 
-				if(!estValide(i, args))	return null;
+			case "-o":
+				if (!estValide(i, args))
+					return null;
 				type = Planner.DOMAIN;
-				value = new File(args[i+1]);
+				value = new File(args[i + 1]);
 				break;
-			case "-f": 
-				if(!estValide(i, args))	return null;
+			case "-f":
+				if (!estValide(i, args))
+					return null;
 				type = Planner.PROBLEM;
-				value = new File(args[i+1]);
+				value = new File(args[i + 1]);
 				break;
-			case "-t": 
-				if (i >= args.length ||
-					(int)(value = Integer.parseInt(args[i + 1]) * 1000) < 0) return null;
+			case "-t":
+				if (i >= args.length || (int) (value = Integer.parseInt(args[i + 1]) * 1000) < 0)
+					return null;
 				type = Planner.TIMEOUT;
 				arg.put(type, value);
 				break;
-			case "-w": 
+			case "-w":
 				value = Double.parseDouble(args[i + 1]);
-				if ((int) value < 0) return null;
+				if ((int) value < 0)
+					return null;
 				type = StateSpacePlanner.WEIGHT;
 				break;
 			default:
 				return null;
-			
+
 			}
 			arg.put(type, value);
 		}
@@ -193,31 +155,32 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 			return arg;
 		return null;
 	}
-	
+
 	private static boolean estSpecifie(Properties arg, String aSpecifie) {
 		return arg.get(aSpecifie) != null;
 	}
-			
-	/*
+
+	/**
 	 * Recupere le temps mis par le solver, renvoie -1 si ce dernier n'a pas fini
 	 */
-	
 	public long timeUse() {
-		if(this.getStatistics().getTimeToSearch() == -1) return -1;
-		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse() + this.getStatistics().getTimeToSearch();
+		if (this.getStatistics().getTimeToSearch() == -1)
+			return -1;
+		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse()
+				+ this.getStatistics().getTimeToSearch();
 	}
-	
-	/*
+
+	/**
 	 * Trace le plan selon un probleme donne
 	 */
 	public void search() {
 		Plan plan = this.search(this.pb);
 		if (plan != null) {
-			  Planner.getLogger().trace(String.format("%nfound plan as follows:%n%n" + pb.toString(plan)));
-			  Planner.getLogger().trace(String.format("%nplan total cost: %4.2f%n%n", plan.cost()));
-			} else {
-			  Planner.getLogger().trace(String.format(String.format("%nno plan found%n%n")));
+			Planner.getLogger().trace(String.format("%nfound plan as follows:%n%n" + pb.toString(plan)));
+			Planner.getLogger().trace(String.format("%nplan total cost: %4.2f%n%n", plan.cost()));
+		} else {
+			Planner.getLogger().trace(String.format(String.format("%nno plan found%n%n")));
 		}
 	}
-	
+
 }
