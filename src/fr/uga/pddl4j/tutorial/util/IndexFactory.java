@@ -29,7 +29,6 @@ public class IndexFactory {
 	}
 
 	public int getIndex(int valeur) {
-		return valeur / (1 << 16);
+		return valeur / (1 << 16) - 1;
 	}
-
 }
