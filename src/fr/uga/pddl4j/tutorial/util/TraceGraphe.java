@@ -1,16 +1,13 @@
 package fr.uga.pddl4j.tutorial.util;
 
-import fr.uga.pddl4j.tutorial.asp.AStarSolver;
-import fr.uga.pddl4j.tutorial.sat.SATSearch;
-
 import java.io.FileWriter;
 import java.io.IOException;
 
-import javax.swing.JFrame;
+import fr.uga.pddl4j.tutorial.asp.AStarSolver;
+import fr.uga.pddl4j.tutorial.sat.SATSearch;
+import fr.uga.pddl4j.util.Plan;
 
-public class TraceGraphe extends JFrame {
-
-	private static final long serialVersionUID = 1L;
+public class TraceGraphe {
 
 	/**
 	 * Nom du probleme relie au temps mit par l'ASP [0] et par le SAT [1]
@@ -21,7 +18,7 @@ public class TraceGraphe extends JFrame {
 	public TraceGraphe() {
 		try {
 			fw = new FileWriter(PATH);
-			fw.append("File; AStar; SAT\n");
+			fw.append("File; AStar; SAT; AStarP; SATP\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -34,17 +31,18 @@ public class TraceGraphe extends JFrame {
 	public void add(String[] args, String name) {
 
 		AStarSolver asp = new AStarSolver(args);
-		asp.search();
+		Plan pa = asp.search();
 		SATSearch sats = new SATSearch(args);
-		sats.search();
+		Plan ps = sats.search();
+		name = gererName(name);
 		try {
 			fw.append(name + ";");
 
 			// Si le timeout a expire, on set la valeur a NaN
 			if (sats.timeUse() == -1)
-				fw.append(name + ";" + asp.timeUse() + ";" + "\n");
+				fw.append(asp.timeUse() + ";" + ";" + pa.cost() + "\n");
 			else
-				fw.append(name + ";" + asp.timeUse() + ";" + sats.timeUse() + "\n");
+				fw.append(asp.timeUse() + ";" + sats.timeUse() + ";" + pa.cost() + ";" + ps.cost() + "\n");
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -57,5 +55,11 @@ public class TraceGraphe extends JFrame {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private String gererName(String name) {
+		String[] all = name.split("/");
+		all = all[all.length - 1].split(".pddl");
+		return all[all.length - 1];
 	}
 }

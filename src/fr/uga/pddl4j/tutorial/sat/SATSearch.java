@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.sat4j.core.VecInt;
 import org.sat4j.csp.SolverFactory;
+import org.sat4j.reader.DimacsReader;
 import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.IProblem;
 import org.sat4j.specs.ISolver;
@@ -16,95 +17,79 @@ import fr.uga.pddl4j.tutorial.ParserPlanner;
 import fr.uga.pddl4j.tutorial.util.IndexFactory;
 import fr.uga.pddl4j.util.BitExp;
 import fr.uga.pddl4j.util.BitOp;
-import fr.uga.pddl4j.util.BitState;
 import fr.uga.pddl4j.util.BitVector;
+import fr.uga.pddl4j.util.BitState;
+import fr.uga.pddl4j.util.IntExp;
 import fr.uga.pddl4j.util.Plan;
+import fr.uga.pddl4j.util.SequentialPlan;
 
+/**
+ * 
+ */
 public class SATSearch extends ParserPlanner {
 
+	private static final long serialVersionUID = 1L;
+	private static final int TIMEOUT = 300;
 	private static final int MAX_OPERATORS = 500;
 
-	private static final long serialVersionUID = 1L;
-
-	private static final int TIMEOUT = 300;
-	private ArrayList<ArrayList<Integer>> clauses;
 	private final int MIN_STEP;
-	private final IndexFactory numberGenerator;
+	private final int FACTS_COUNT;
 	private final List<BitOp> operators;
+	private final IndexFactory numberGenerator;
+	private ArrayList<ArrayList<Integer>> clauses;
 
-	private int FACTS_COUNT;
 	private long time;
 	private long timeToEncode = 0;
 
 	public SATSearch(String[] args) {
 		super(args);
-		this.numberGenerator = new IndexFactory();
-		this.operators = pb.getOperators();
+		numberGenerator = new IndexFactory();
+		operators = pb.getOperators();
 
-		PATH += "test.txt";
-
-		this.clauses = new ArrayList<>();
+		clauses = new ArrayList<>();
+		FACTS_COUNT = pb.getRelevantFacts().size();
 		final Heuristic heuristic = HeuristicToolKit.createHeuristic(Heuristic.Type.FAST_FORWARD, pb);
 		final BitState init = new BitState(pb.getInit());
-		FACTS_COUNT = pb.getRelevantFacts().size();
-		this.MIN_STEP = heuristic.estimate(init, pb.getGoal());
-		// System.out.printf("[SAT] heuristic: %d\n", this.MIN_STEP);
+		MIN_STEP = heuristic.estimate(init, pb.getGoal());
 	}
 
 	/**
 	 * Affichage du resultat sur la sortie standart
+	 * 
+	 * @param res
+	 * @param steps
+	 * @return
 	 */
-	private void display(int[] res, int steps) {
+	private Plan affichageEtPlan(int[] res, int steps) {
 		String[] resString = new String[steps];
 
-		int actionsFound = 0;
+		// Tous les bitOps, pour le plan
+		BitOp[] resBitOp = new BitOp[steps];
+		Plan plan = new SequentialPlan();
 
 		for (int value : res) {
 			int index = numberGenerator.getIndex(Math.abs(value));
 			int step = numberGenerator.getEtape(Math.abs(value));
 
 			if (index >= FACTS_COUNT && value > 0) {
-				index -= FACTS_COUNT;
-				actionsFound++;
-				BitOp operation = operators.get(index);
-				resString[step] = "\t" + operation.getName() + " ";
-
-				for (int op : operation.getInstantiations()) {
-					resString[step] += pb.getConstants().get(op) + " ";
-				}
+				// On place l'indice a son etape dans le tableau
+				resBitOp[step] = operators.get(index - FACTS_COUNT);
 			}
 		}
 
-		System.out.printf("%d - actions found\n", actionsFound);
+		// Parcours du tableau et affichage
+		for (int i = 0; i < steps; i++)
+			plan.add(i, resBitOp[i]);
 
-		for (int i = 0; i < steps; i++) {
-			System.out.print("Step " + i + " : ");
-			System.out.println(resString[i]);
-		}
+		return plan;
+
 	}
 
-	private void generateInit(BitExp expression, ArrayList<ArrayList<Integer>> clauses) {
-		for (int i = 0; i < FACTS_COUNT; i++) {
-			ArrayList<Integer> clause = new ArrayList<>();
-			clause.add(numberGenerator.generateIndex(i, 0, expression.getPositive().get(i)));
-			clauses.add(clause);
-		}
-	}
-
-	private ArrayList<ArrayList<Integer>> generateGoal(BitExp expression, int step) {
-		ArrayList<ArrayList<Integer>> clauses = new ArrayList<>();
-
-		for (int i = 0; i < FACTS_COUNT; i++) {
-			if (expression.getPositive().get(i)) {
-				ArrayList<Integer> clause = new ArrayList<>();
-				clause.add(numberGenerator.generateIndex(i, step, expression.getPositive().get(i)));
-				clauses.add(clause);
-			}
-		}
-
-		return clauses;
-	}
-
+	/**
+	 * 
+	 * @param step
+	 * @param clauses
+	 */
 	private void generateActions(int step, ArrayList<ArrayList<Integer>> clauses) {
 		for (int i = 0; i < operators.size(); i++) {
 			int actionId = numberGenerator.generateIndex(i + FACTS_COUNT, step, false);
@@ -143,21 +128,11 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
-	private void generateDisjunctions(int step, ArrayList<ArrayList<Integer>> clauses) {
-		for (int i = 0; i < operators.size() - 1; i++) {
-			for (int j = i + 1; j < operators.size(); j++) {
-				ArrayList<Integer> disjunction = new ArrayList<>();
-				disjunction.add(numberGenerator.generateIndex(i + FACTS_COUNT, step, false));
-				disjunction.add(numberGenerator.generateIndex(j + FACTS_COUNT, step, false));
-				clauses.add(disjunction);
-			}
-		}
-	}
-
-	public CodedProblem getPB() {
-		return this.pb;
-	}
-
+	/**
+	 * 
+	 * @param step
+	 * @param clauses
+	 */
 	private void generateTransitions(int step, ArrayList<ArrayList<Integer>> clauses) {
 		for (int i = 0; i < FACTS_COUNT; i++) {
 			ArrayList<Integer> transitionNeg = new ArrayList<>();
@@ -184,12 +159,67 @@ public class SATSearch extends ParserPlanner {
 	}
 
 	/**
+	 * 
+	 * @param step
+	 * @param clauses
+	 */
+	private void generateDisjunctions(int step, ArrayList<ArrayList<Integer>> clauses) {
+		for (int i = 0; i < operators.size() - 1; i++) {
+			for (int j = i + 1; j < operators.size(); j++) {
+				ArrayList<Integer> disjunction = new ArrayList<>();
+				disjunction.add(numberGenerator.generateIndex(i + FACTS_COUNT, step, false));
+				disjunction.add(numberGenerator.generateIndex(j + FACTS_COUNT, step, false));
+				clauses.add(disjunction);
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * @param expression
+	 * @param clauses
+	 */
+	private void generateInit(BitExp expression, ArrayList<ArrayList<Integer>> clauses) {
+		for (int i = 0; i < FACTS_COUNT; i++) {
+			ArrayList<Integer> clause = new ArrayList<>();
+			clause.add(numberGenerator.generateIndex(i, 0, expression.getPositive().get(i)));
+			clauses.add(clause);
+		}
+	}
+
+	/**
+	 * 
+	 * @param expression
+	 * @param step
+	 * @return goal clauses
+	 */
+	private ArrayList<ArrayList<Integer>> generateGoal(BitExp expression, int step) {
+		ArrayList<ArrayList<Integer>> clauses = new ArrayList<>();
+
+		for (int i = 0; i < FACTS_COUNT; i++) {
+			if (expression.getPositive().get(i)) {
+				ArrayList<Integer> clause = new ArrayList<>();
+				clause.add(numberGenerator.generateIndex(i, step, expression.getPositive().get(i)));
+				clauses.add(clause);
+			}
+		}
+
+		return clauses;
+	}
+
+	public CodedProblem getPB() {
+		return this.pb;
+	}
+
+	/**
 	 * Recherche de solution au probleme donne, programme principal
+	 * @param cp
+	 * @return
 	 */
 	@Override
-	public void search() {
+	public Plan search(CodedProblem cp) {
 		if (pb.getOperators().size() > MAX_OPERATORS) {
-			return;
+			return null;
 		}
 
 		int[] result = {};
@@ -226,7 +256,7 @@ public class SATSearch extends ParserPlanner {
 					System.out.println("[SAT] timeout exception");
 					// Si le timeout a ete depassé on set le temps pour solve a -1 et on arrete
 					super.getStatistics().setTimeToSearch(-1);
-					return;
+					return null;
 				}
 
 				super.getStatistics().setTimeToSearch(System.currentTimeMillis() - time);
@@ -239,20 +269,14 @@ public class SATSearch extends ParserPlanner {
 			}
 		}
 
-		display(result, step + 1);
+		return affichageEtPlan(result, step + 1);
 	}
 
 	/**
-	 * Recherche par CodedProblem, obligatoire par la classe mere, nous ne
-	 * l'utilisons pas
+	 * 
+	 * @return
+	 * @throws Exception
 	 */
-	@Override
-	public Plan search(CodedProblem arg) {
-		this.pb = arg;
-		this.search();
-		return null;
-	}
-
 	private int[] solverSat() throws Exception {
 		final int MAXVAR = 1000000;
 		final int NBCLAUSES = clauses.size();

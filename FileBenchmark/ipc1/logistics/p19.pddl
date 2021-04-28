@@ -6,7 +6,7 @@
   apt4 apt3  apt2 apt1 - airport
   pos4 pos3 pos2 pos1 - location
   cit4 cit3 cit2 cit1 - city
-  tru4 tru3 tru2 tru1 - vehicle
+  tru4 tru3 tru2 tru1 - truck
   obj43 obj42 obj41 obj33 obj32 obj31
   obj23 obj22 obj21 obj13 obj12 obj11 - package)
 

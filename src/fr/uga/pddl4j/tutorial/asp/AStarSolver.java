@@ -1,13 +1,12 @@
 package fr.uga.pddl4j.tutorial.asp;
 
-import fr.uga.pddl4j.tutorial.ParserPlanner;
-
 import fr.uga.pddl4j.encoding.CodedProblem;
 import fr.uga.pddl4j.heuristics.relaxation.Heuristic;
 import fr.uga.pddl4j.planners.statespace.StateSpacePlanner;
 import fr.uga.pddl4j.planners.statespace.search.strategy.AStar;
 import fr.uga.pddl4j.planners.statespace.search.strategy.Node;
 import fr.uga.pddl4j.planners.statespace.search.strategy.StateSpaceStrategy;
+import fr.uga.pddl4j.tutorial.ParserPlanner;
 import fr.uga.pddl4j.util.Plan;
 
 public final class AStarSolver extends ParserPlanner {
@@ -18,12 +17,17 @@ public final class AStarSolver extends ParserPlanner {
 		super(args);
 	}
 
+	public CodedProblem getPB() {
+
+		return this.pb;
+	}
+
 	/**
-	 * Le problème est parsé par la classe mere. Nous n'avons
-	 * besoin que du solver
+	 * Le problème est parsé par la classe mere. Nous n'avons besoin que du solver
 	 */
 	@Override
 	public Plan search(final CodedProblem problem) {
+		this.pb = problem;
 		// Initialisation du chronometre
 		long time = System.currentTimeMillis();
 		int timeout = DEFAULT_TIMEOUT;

@@ -7,27 +7,6 @@ public class Benchmark {
 	public static final String PATH = "File/";
 
 	/**
-	 * Methode pour commencer le benchmark. Elle commence par un fichier donne dans
-	 * le PATH. Elle a aussi besoin d'un traceur pour enregistrer les donnees dans
-	 * un fichier csv.
-	 */
-	public static void start(String PATH, TraceGraphe tg) {
-		// ouverture du ficher
-		File file = new File(PATH);
-		File[] files = file.listFiles();
-		if (files != null) {
-			// Si c'est un repertoire on le parcours
-			if (files[0].isDirectory()) {
-				start(files[0].toPath().toString(), tg);
-				return;
-			} else {
-				// Sinon on creer les arguments du fichiers, afin de pouvoir lancer la recherche
-				createArgs(files, tg);
-			}
-		}
-	}
-
-	/**
 	 * Creation des arguments
 	 */
 	private static void createArgs(File[] files, TraceGraphe tg) {
@@ -64,4 +43,26 @@ public class Benchmark {
 			}
 		}
 	}
+
+	/**
+	 * Methode pour commencer le benchmark. Elle commence par un fichier donne dans
+	 * le PATH. Elle a aussi besoin d'un traceur pour enregistrer les donnees dans
+	 * un fichier csv.
+	 */
+	public static void start(String PATH, TraceGraphe tg) {
+		// ouverture du ficher
+		File file = new File(PATH);
+		File[] files = file.listFiles();
+		if (files != null) {
+			// Si c'est un repertoire on le parcours
+			if (files[0].isDirectory()) {
+				start(files[0].toPath().toString(), tg);
+				return;
+			} else {
+				// Sinon on creer les arguments du fichiers, afin de pouvoir lancer la recherche
+				createArgs(files, tg);
+			}
+		}
+	}
+
 }
