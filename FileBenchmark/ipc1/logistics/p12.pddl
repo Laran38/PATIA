@@ -5,7 +5,7 @@
  apt3 apt2 apt1 - airport
  pos3 pos2 pos1 - location
   cit3 cit2 cit1 - city
-  tru3 tru2 tru1 - vehicle
+  tru3 tru2 tru1 - truck
   obj33 obj32 obj31 obj23 obj22 obj21 obj13 obj12 obj11 - package)
 
 (:init

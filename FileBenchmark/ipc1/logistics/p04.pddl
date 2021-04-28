@@ -5,7 +5,7 @@
   apt2 apt1 - airport
   pos2 pos1 - location
   cit2 cit1 - city
-  tru2 tru1 - vehicle
+  tru2 tru1 - truck
   obj23 obj22 obj21 obj13 obj12 obj11 - package)
 
 (:init (at apn1 apt1) (at tru1 pos1) (at obj11 pos1)
