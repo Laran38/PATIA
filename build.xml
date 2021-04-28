@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. --><project basedir="." default="build" name="ASP">
+    <property environment="env"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="14"/>
+    <property name="source" value="14"/>
+    <path id="pddl.userclasspath"/>
+    <path id="PDDL.userclasspath">
+        <pathelement location="../../ASP/src/lib/pddl4j-3.8.3.jar"/>
+    </path>
+    <path id="SAT.userclasspath">
+        <pathelement location="../../ASP/org.sat4j.pb.jar"/>
+        <pathelement location="../../ASP/org.sat4j.pb-src.jar"/>
+        <pathelement location="../../ASP/sat4j-csp.jar"/>
+    </path>
+    <path id="ASP.classpath">
+        <pathelement location="bin"/>
+        <path refid="pddl.userclasspath"/>
+        <path refid="PDDL.userclasspath"/>
+        <path refid="SAT.userclasspath"/>
+    </path>
+    <path id="run.ASP.classpath">
+        <path refid="ASP.classpath"/>
+        <path refid="pddl.userclasspath"/>
+        <path refid="PDDL.userclasspath"/>
+        <path refid="SAT.userclasspath"/>
+    </path>
+    <path id="run.Ast.classpath">
+        <path refid="ASP.classpath"/>
+        <path refid="pddl.userclasspath"/>
+        <path refid="PDDL.userclasspath"/>
+        <path refid="SAT.userclasspath"/>
+    </path>
+    <path id="run.Main (3).classpath">
+        <path refid="ASP.classpath"/>
+        <path refid="pddl.userclasspath"/>
+        <path refid="PDDL.userclasspath"/>
+        <path refid="SAT.userclasspath"/>
+    </path>
+    <path id="run.Main (4).classpath">
+        <path refid="ASP.classpath"/>
+        <path refid="pddl.userclasspath"/>
+        <path refid="PDDL.userclasspath"/>
+        <path refid="SAT.userclasspath"/>
+    </path>
+    <path id="run.test (1).classpath">
+        <path refid="ASP.classpath"/>
+        <path refid="pddl.userclasspath"/>
+        <path refid="PDDL.userclasspath"/>
+        <path refid="SAT.userclasspath"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="ASP.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+    <target name="ASP">
+        <java classname="fr.uga.pddl4j.tutorial.asp.ASP" failonerror="true" fork="yes">
+            <arg line="-p"/>
+            <classpath refid="run.ASP.classpath"/>
+        </java>
+    </target>
+    <target name="Ast">
+        <java classname="Ast" failonerror="true" fork="yes">
+            <classpath refid="run.Ast.classpath"/>
+        </java>
+    </target>
+    <target name="Main (3)">
+        <java classname="fr.uga.pddl4j.tutorial.asp.Main" failonerror="true" fork="yes">
+            <classpath refid="run.Main (3).classpath"/>
+        </java>
+    </target>
+    <target name="Main (4)">
+        <java classname="Main" failonerror="true" fork="yes">
+            <arg line="-o File/domain.pddl -f File/problem.pddl"/>
+            <classpath refid="run.Main (4).classpath"/>
+        </java>
+    </target>
+    <target name="test (1)">
+        <java classname="fr.uga.pddl4j.tutorial.asp.test" failonerror="true" fork="yes">
+            <classpath refid="run.test (1).classpath"/>
+        </java>
+    </target>
+</project>
