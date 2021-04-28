@@ -177,7 +177,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		}
 		return plan;
 	}
- 
+
 	/** 
 	 * Recupere le temps mis par le solver, renvoie -1 si ce dernier n'a pas fini
 	 */
