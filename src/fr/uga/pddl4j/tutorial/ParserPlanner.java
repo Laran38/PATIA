@@ -14,68 +14,7 @@ import fr.uga.pddl4j.util.Plan;
 abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 
 	private static final long serialVersionUID = 1L;
-	protected Properties arguments;
-	protected long time;
-	protected CodedProblem pb;
 	protected static String PATH = "";
-
-	protected ParserPlanner() {
-	}
-
-	/**
-	 * Parse les arguments et enregistre le temps pour parser
-	 */
-
-	public ParserPlanner(String[] args) {
-		this.arguments = gererOptions(args);
-		this.time = System.currentTimeMillis();
-		this.pb = this.parse(args);
-		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
-	}
-
-	public ParserPlanner(final Properties arguments) {
-		super();
-		this.arguments = arguments;
-	}
-
-	/*
-	 * Parse le probleme.
-	 */
-	public CodedProblem parse(String[] args) {
-		time = System.currentTimeMillis();
-		final Properties arguments = ParserPlanner.gererOptions(args);
-		if (arguments == null) {
-			ParserPlanner.afficherAide();
-			System.exit(0);
-		}
-		final ProblemFactory fact = ProblemFactory.getInstance();
-		File domain = (File) arguments.get(Planner.DOMAIN);
-		File problem = (File) arguments.get(Planner.PROBLEM);
-
-		try {
-			ErrorManager em;
-			em = fact.parse(domain, problem);
-			if (!em.isEmpty()) {
-				em.printAll();
-				Planner.getLogger().trace(em);
-				System.exit(1);
-			}
-		} catch (Exception e) {
-			Planner.getLogger().trace("\nunexpected error when parsing the PDDL planning problem description.");
-			System.exit(0);
-		}
-
-		final CodedProblem pb = fact.encode();
-		Planner.getLogger().trace("\nencoding problem done successfully (" + pb.getOperators().size() + " ops, "
-				+ pb.getRelevantFacts().size() + " facts)\n");
-
-		if (!pb.isSolvable()) {
-			Planner.getLogger()
-					.trace(String.format("goal can be simplified to FALSE." + "no search will solve it%n%n"));
-			System.exit(0);
-		}
-		return pb;
-	}
 
 	/*
 	 * Affichage de toutes les options possible
@@ -98,6 +37,10 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		sb = sb.append("-p 		   lunch the benchmark. Can be very long ! \n");
 		sb = sb.append("-h    print this message \n");
 		Planner.getLogger().trace(sb);
+	}
+
+	private static boolean estSpecifie(Properties arg, String aSpecifie) {
+		return arg.get(aSpecifie) != null;
 	}
 
 	/**
@@ -155,24 +98,76 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		return null;
 	}
 
-	private static boolean estSpecifie(Properties arg, String aSpecifie) {
-		return arg.get(aSpecifie) != null;
+	protected Properties arguments;
+
+	protected long time;
+
+	protected CodedProblem pb;
+
+	protected ParserPlanner() {
+	}
+
+	public ParserPlanner(final Properties arguments) {
+		super();
+		this.arguments = arguments;
 	}
 
 	/**
-	 * Recupere le temps mis par le solver, renvoie -1 si ce dernier n'a pas fini
+	 * Parse les arguments et enregistre le temps pour parser
 	 */
-	public long timeUse() {
-		if (this.getStatistics().getTimeToSearch() == -1)
-			return -1;
-		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse()
-				+ this.getStatistics().getTimeToSearch();
+
+	public ParserPlanner(String[] args) {
+		this.arguments = gererOptions(args);
+		this.time = System.currentTimeMillis();
+		this.pb = this.parse(args);
+		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
+	}
+
+	/*
+	 * Parse le probleme.
+	 */
+	public CodedProblem parse(String[] args) {
+		time = System.currentTimeMillis();
+		final Properties arguments = ParserPlanner.gererOptions(args);
+		if (arguments == null) {
+			ParserPlanner.afficherAide();
+			System.exit(0);
+		}
+		final ProblemFactory fact = ProblemFactory.getInstance();
+		File domain = (File) arguments.get(Planner.DOMAIN);
+		File problem = (File) arguments.get(Planner.PROBLEM);
+
+		try {
+			ErrorManager em;
+			em = fact.parse(domain, problem);
+			if (!em.isEmpty()) {
+				em.printAll();
+				Planner.getLogger().trace(em);
+				System.exit(1);
+			}
+		} catch (Exception e) {
+			Planner.getLogger().trace("\nunexpected error when parsing the PDDL planning problem description.");
+			System.exit(0);
+		}
+
+		final CodedProblem pb = fact.encode();
+		Planner.getLogger().trace("\nencoding problem done successfully (" + pb.getOperators().size() + " ops, "
+				+ pb.getRelevantFacts().size() + " facts)\n");
+
+		if (!pb.isSolvable()) {
+			Planner.getLogger()
+					.trace(String.format("goal can be simplified to FALSE." + "no search will solve it%n%n"));
+			System.exit(0);
+		}
+		return pb;
 	}
 
 	/**
 	 * Trace le plan selon un probleme donne
+	 *
+	 * @return
 	 */
-	public void search() {
+	public Plan search() {
 		Plan plan = this.search(this.pb);
 		if (plan != null) {
 			Planner.getLogger().trace(String.format("%nfound plan as follows:%n%n" + pb.toString(plan)));
@@ -180,6 +175,17 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		} else {
 			Planner.getLogger().trace(String.format(String.format("%nno plan found%n%n")));
 		}
+		return plan;
+	}
+ 
+	/** 
+	 * Recupere le temps mis par le solver, renvoie -1 si ce dernier n'a pas fini
+	 */
+	public long timeUse() {
+		if (this.getStatistics().getTimeToSearch() == -1)
+			return -1;
+		return this.getStatistics().getTimeToEncode() + this.getStatistics().getTimeToParse()
+				+ this.getStatistics().getTimeToSearch();
 	}
 
 }
