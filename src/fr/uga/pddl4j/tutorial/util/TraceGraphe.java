@@ -3,15 +3,11 @@ package fr.uga.pddl4j.tutorial.util;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import javax.swing.JFrame;
-
 import fr.uga.pddl4j.tutorial.asp.AStarSolver;
 import fr.uga.pddl4j.tutorial.sat.SATSearch;
 import fr.uga.pddl4j.util.Plan;
 
-public class TraceGraphe extends JFrame {
-
-	private static final long serialVersionUID = 1L;
+public class TraceGraphe {
 
 	/**
 	 * Nom du probleme relie au temps mit par l'ASP [0] et par le SAT [1]
