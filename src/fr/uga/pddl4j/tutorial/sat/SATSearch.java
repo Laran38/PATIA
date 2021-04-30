@@ -287,7 +287,6 @@ public class SATSearch extends ParserPlanner {
 		solver.newVar(MAXVAR);
 		solver.setExpectedNumberOfClauses(NBCLAUSES);
 		solver.setTimeout(TIMEOUT);
-
 		for (int i = 0; i < clauses.size(); i++) {
 			try {
 				int[] clause = new int[clauses.get(i).size()];
@@ -296,8 +295,6 @@ public class SATSearch extends ParserPlanner {
 				}
 				VecInt allC = new VecInt(clause);
 				solver.addClause(allC);
-				if (etape == 19)
-					System.out.println(this.clauses.size());
 			} catch (ContradictionException e) {
 				e.printStackTrace();
 			}
