@@ -18,9 +18,11 @@ package fr.uga.pddl4j.tutorial.util;
  * de variable
  */
 public class IndexFactory {
+	private final int offsetIndex = 16;
+	private final int offsetEtape = 32 - offsetIndex;
 
 	public Integer generateIndex(int index, Integer etape, boolean c) {
-		int toRet = ((index + 1) << 16) + etape;
+		int toRet = ((index + 1) << offsetIndex) + etape;
 		return c ? toRet : toRet * -1;
 	}
 

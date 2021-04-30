@@ -9,6 +9,8 @@ import fr.uga.pddl4j.util.Plan;
 
 public class TraceGraphe {
 
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Nom du probleme relie au temps mit par l'ASP [0] et par le SAT [1]
 	 */
@@ -40,9 +42,10 @@ public class TraceGraphe {
 
 			// Si le timeout a expire, on set la valeur a NaN
 			if (sats.timeUse() == -1)
-				fw.append(asp.timeUse() + ";" + ";" + pa.cost() + "\n");
+				fw.append(asp.timeUse() / 1000 + ";" + ";" + pa.cost() + "\n");
 			else
-				fw.append(asp.timeUse() + ";" + sats.timeUse() + ";" + pa.cost() + ";" + ps.cost() + "\n");
+				fw.append(
+						asp.timeUse() / 1000 + ";" + sats.timeUse() / 1000 + ";" + pa.cost() + ";" + ps.cost() + "\n");
 
 		} catch (IOException e) {
 			e.printStackTrace();

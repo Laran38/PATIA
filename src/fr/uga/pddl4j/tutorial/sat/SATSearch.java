@@ -25,7 +25,6 @@ import fr.uga.pddl4j.util.SequentialPlan;
 public class SATSearch extends ParserPlanner {
 
 	private static final long serialVersionUID = 1L;
-	private static final int TIMEOUT = 300;
 	private final int MIN_STEP;
 	private final int numberOfFact;
 	private final List<BitOp> operators;
@@ -38,6 +37,7 @@ public class SATSearch extends ParserPlanner {
 
 	public SATSearch(String[] args) {
 		super(args);
+		this.TIMEOUT = this.TIMEOUT / 1000;
 		this.numberGenerator = new IndexFactory();
 		this.operators = pb.getOperators();
 		this.revelantFacts = pb.getRelevantFacts();
@@ -50,10 +50,11 @@ public class SATSearch extends ParserPlanner {
 		this.MIN_STEP = heuristic.estimate(init, pb.getGoal());
 	}
 
-	/*
-	 * Affichage du resultat sur la sortie standart
+	/**
+	 *
+	 * @param res - le resultat du sat solver
+	 * @return Le plan extrait du probleme
 	 */
-
 	private Plan affichageEtPlan(String res) {
 
 		// Decoupage du resultat donner par le sat Solver
@@ -88,6 +89,11 @@ public class SATSearch extends ParserPlanner {
 
 	}
 
+	/**
+	 *
+	 * @return void - rempli les parametres de la classe avec toutes les actions
+	 *         possibles
+	 */
 	private void genererActions() {
 		int posCourante = revelantFacts.size();
 		for (BitOp ai : operators) {
@@ -113,8 +119,10 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
-	/*
-	 * Fait en sorte qu'une action soit une unique a une certaine etape
+	/**
+	 *
+	 * @return void - rempli les parametres de la classe avec toutes les
+	 *         disjonctions possibles
 	 */
 	private void genererDisjonction() {
 		ArrayList<Integer> toAdd;
@@ -133,6 +141,11 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
+	/**
+	 *
+	 * @return void - rempli les parametres de la classe avec les objectifs
+	 *         possibles
+	 */
 	private void genererGoal(BitExp bitExp) {
 		ArrayList<Integer> allInt;
 		// Parcours des revelantFacts
@@ -152,6 +165,10 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
+	/**
+	 *
+	 * @return void - rempli les parametres de la classe avec l'etat initial
+	 */
 	private void genererInit(BitExp bitExp) {
 		ArrayList<Integer> allInt;
 		// Parcours des predicats, ajout du predicat si il fait partie de
@@ -164,9 +181,9 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
-	/*
-	 * Generation des transitions entre les predicats courant et les futures actions
-	 * possible
+	/**
+	 *
+	 * @return void - rempli les parametres de la classe avec toutes les transitions
 	 */
 	private void genererTransition() {
 		// Parcours de tous les predicats
@@ -201,6 +218,10 @@ public class SATSearch extends ParserPlanner {
 		return this.pb;
 	}
 
+	/*
+	 * Resoud une implication de la forme a => (b1 v b2 v ... v bn)
+	 */
+
 	private void implication(int indiceAction, ArrayList<Integer> toAdd) {
 		indiceAction *= -1;
 		ArrayList<Integer> toArr;
@@ -221,15 +242,18 @@ public class SATSearch extends ParserPlanner {
 		clauses.add(index);
 	}
 
-	/*
+	/**
 	 * Recherche de solution au probleme donne, programme principal
+	 *
+	 * @param cp - le codedProblem a solve
+	 * @return Le plan de l'execution, null en cas d'echec
 	 */
 	@Override
 	public Plan search(CodedProblem cp) {
 		// Si on est a la premiere etape alors ajoute les predicats initiaux
 		if (this.etape == 0) {
 			timeToEncode = System.currentTimeMillis();
-			genererInit(pb.getInit());
+			genererInit(this.pb.getInit());
 		}
 		// On genere en suite les actions et les predicats qu'elle impliquent a l'etape
 		// K
@@ -250,7 +274,7 @@ public class SATSearch extends ParserPlanner {
 			// On doit avant tout sauvegarder ceux qui ont ete ajoute, afin de pouvoir les
 			// enelever si le probleme n est pas satisfaible
 			int save = this.clauses.size();
-			genererGoal(pb.getGoal());
+			genererGoal(this.pb.getGoal());
 			// On met a jour le chronometre
 			super.getStatistics().setTimeToEncode(System.currentTimeMillis() - timeToEncode);
 			time = System.currentTimeMillis();
@@ -276,6 +300,12 @@ public class SATSearch extends ParserPlanner {
 		}
 	}
 
+	/**
+	 *
+	 * @return Une chaine de caractere avec toutes les valeurs satisfaisant
+	 *         l'ensemble, "" sinon
+	 * @throws Exception si le timer a expire
+	 */
 	private String solverSat() throws Exception {
 		final int MAXVAR = 10000000;
 		final int NBCLAUSES = 50000000;
@@ -287,6 +317,7 @@ public class SATSearch extends ParserPlanner {
 		solver.newVar(MAXVAR);
 		solver.setExpectedNumberOfClauses(NBCLAUSES);
 		solver.setTimeout(TIMEOUT);
+
 		for (int i = 0; i < clauses.size(); i++) {
 			try {
 				int[] clause = new int[clauses.get(i).size()];

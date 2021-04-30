@@ -15,6 +15,32 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 
 	private static final long serialVersionUID = 1L;
 	protected static String PATH = "";
+	protected int TIMEOUT = 300;
+
+	protected Properties arguments;
+
+	protected long time;
+
+	protected CodedProblem pb;
+
+	protected ParserPlanner() {
+	}
+
+	public ParserPlanner(final Properties arguments) {
+		super();
+		this.arguments = arguments;
+	}
+
+	/**
+	 * Parse les arguments et enregistre le temps pour parser
+	 */
+
+	public ParserPlanner(String[] args) {
+		this.arguments = gererOptions(args);
+		this.time = System.currentTimeMillis();
+		this.pb = this.parse(args);
+		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
+	}
 
 	/*
 	 * Affichage de toutes les options possible
@@ -27,14 +53,13 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		sb = sb.append("with -mode : \n");
 		sb = sb.append("-a    A star solver \n");
 		sb = sb.append("-s    SAT Solver \n");
-		sb = sb.append("-p    Benchmark, A star and SAT\n");
+		sb = sb.append("-p 		   lunch the benchmark. Can be very long ! \n");
 		sb = sb.append("with -opt :  \n");
 		sb = sb.append("-h    print this message \n");
 		sb = sb.append("-o <str>   operator file name \n");
 		sb = sb.append("-f <str>   fact file name \n");
 		sb = sb.append("-w <num>   the weight used in the a star search (preset: 1) \n");
-		sb = sb.append("-t <num>   specifies the maximum CPU-time in seconds (preset: 300) \n");
-		sb = sb.append("-p 		   lunch the benchmark. Can be very long ! \n");
+		sb = sb.append("-t <num>   specifies the maximum CPU-time in seconds (preset: 600) \n");
 		sb = sb.append("-h    print this message \n");
 		Planner.getLogger().trace(sb);
 	}
@@ -98,31 +123,6 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		return null;
 	}
 
-	protected Properties arguments;
-
-	protected long time;
-
-	protected CodedProblem pb;
-
-	protected ParserPlanner() {
-	}
-
-	public ParserPlanner(final Properties arguments) {
-		super();
-		this.arguments = arguments;
-	}
-
-	/**
-	 * Parse les arguments et enregistre le temps pour parser
-	 */
-
-	public ParserPlanner(String[] args) {
-		this.arguments = gererOptions(args);
-		this.time = System.currentTimeMillis();
-		this.pb = this.parse(args);
-		super.getStatistics().setTimeToParse(System.currentTimeMillis() - time);
-	}
-
 	/*
 	 * Parse le probleme.
 	 */
@@ -133,10 +133,11 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 			ParserPlanner.afficherAide();
 			System.exit(0);
 		}
+
 		final ProblemFactory fact = ProblemFactory.getInstance();
 		File domain = (File) arguments.get(Planner.DOMAIN);
 		File problem = (File) arguments.get(Planner.PROBLEM);
-
+		this.TIMEOUT = (int) arguments.get(Planner.TIMEOUT);
 		try {
 			ErrorManager em;
 			em = fact.parse(domain, problem);
@@ -178,7 +179,7 @@ abstract public class ParserPlanner extends AbstractStateSpacePlanner {
 		return plan;
 	}
 
-	/** 
+	/**
 	 * Recupere le temps mis par le solver, renvoie -1 si ce dernier n'a pas fini
 	 */
 	public long timeUse() {
